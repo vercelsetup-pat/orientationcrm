@@ -15,6 +15,7 @@
     let formError = $state("");
     let openNonModal = $state(false);
     let editingSchoolId = $state<number | null>(null);
+    let tableSearchQuery = $state("");
 
 
 
@@ -23,8 +24,8 @@
     let schoolsData = $state<School[]>([]);
     let loading = $state(true);
     let error = $state("");
-    let searchQuery = $state("");       // left-panel list search
-    let tableSearchQuery = $state("");  // bottom table search
+    let searchQuery = $state("");      
+    
     // #endregion
 
     // #region Detail panel state
@@ -39,10 +40,7 @@
 
     const headers = ["", "School Name", "Contact Name", "Phone", "Email", "", ""];
 
-    let filteredSchoolsList = $derived(
-        schoolsData.filter((s) => s.schoolName.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
+   
     let filteredSchoolsTable = $derived(
         schoolsData.filter((s) => s.schoolName.toLowerCase().includes(tableSearchQuery.toLowerCase()))
     );
@@ -246,12 +244,28 @@
                         </div>
                     </div>
                 </div>
-
+               
                   <div class="flex items-center shrink-0">
                     <Button color="light" class="h-9" onclick={openAddDrawer}>
                       <PlusOutline size = sm/>&nbsp;Add School
                     </Button>
                 </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+             <div class="relative w-full max-w-[320px]">
+                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+                {#if tableSearchQuery}
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick={() => (tableSearchQuery = "")}
+                        aria-label="Clear search"
+                    >
+                        ×
+                    </button>
+                {/if}
             </div>
         </div>
 

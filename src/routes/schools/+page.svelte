@@ -17,7 +17,7 @@
     let editingSchoolId = $state<number | null>(null);
     let tableSearchQuery = $state("");
 
-
+    let rowsPerPage = $state(10);
 
     // #region List / table state
     let { dark } = $props<{ dark: boolean }>();
@@ -45,11 +45,15 @@
         schoolsData.filter((s) => s.schoolName.toLowerCase().includes(tableSearchQuery.toLowerCase()))
     );
 
+    let displayedSchools = $derived(
+        filteredSchoolsTable.slice(0, rowsPerPage)
+    );
+
     function closePanel() {
         openNonModal = false;
         resetForm();
     }
-    // #region Drawer (add/edit) functions
+  
     function resetForm() {
         editingSchoolId = null;
         schoolName = "";
@@ -292,7 +296,7 @@
                         {:else if filteredSchoolsTable.length === 0}
                             <tr><td colspan="6" class="empty-cell">No students found.</td></tr>
                         {:else}
-                            {#each filteredSchoolsTable as school}
+                            {#each displayedSchools as school}
                                 <tr>
                                     <td class="w-4 p-4">
                                         {#if school.logoUrl}
@@ -321,8 +325,23 @@
                     </tbody>
                 </table>
             </div>
+            
+        </div>
+
+          <div class="flex items-center justify-between mb-4">
+             <div class="flex items-center justify-between py-4 border-t border-gray-100"> 
+                <div class="flex items-center  text-sm text-gray-500"> 
+                     <select bind:value={rowsPerPage}  > 
+                        <option value={10}>10</option> 
+                        <option value={15}>15</option> 
+                        <option value={25}>25</option> 
+                        <option value={35}>35</option> 
+                    </select> 
+                </div> 
+            </div>
         </div>
     </section>
+
 
     {#if openNonModal}
         <aside class="drawer-panel">

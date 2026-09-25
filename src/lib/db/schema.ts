@@ -6,7 +6,8 @@ import {
     timestamp,
     text,
     date,
-    customType
+    customType,
+    pgEnum
 } from "drizzle-orm/pg-core";
 
 const bytea = customType<{
@@ -17,6 +18,14 @@ const bytea = customType<{
         return "bytea";
     }
 });
+
+export const eventTypeEnum = pgEnum("event_type", [
+    "open_doors",
+    "workshop",
+    "school_visit",
+    "event",
+    "other"
+]);
 
 export const schools = pgTable("schools", {
     id: serial("id").primaryKey(),
@@ -48,4 +57,15 @@ export const protocols = pgTable("protocols", {
     createdAt: timestamp("createdat", { withTimezone: false }).defaultNow(),
     updatedAt: timestamp("updatedat", { withTimezone: false }).defaultNow(),
     status: varchar("status", {length: 20 }).notNull().default("Not Signed")
+});
+
+export const events = pgTable("events", {
+    id: serial("id").primaryKey(),
+    title: varchar("title", { length: 255 }).notNull(),
+    type: eventTypeEnum("type").notNull(),
+    eventDate: date("event_date").notNull(),
+    schoolId: integer("school_id").references(() => schools.id, { onDelete: "set null" }),
+    otherLabel: varchar("other_label", { length: 255 }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });

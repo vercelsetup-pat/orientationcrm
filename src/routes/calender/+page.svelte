@@ -176,124 +176,121 @@
 	const sortedEvents = $derived([...events].sort((a, b) => a.eventDate.localeCompare(b.eventDate)));
 </script>
 
-<div class="space-y-6">
-	<div>
-		<h1 class="text-xl font-semibold text-gray-900">Calendar</h1>
-		<p class="text-sm text-gray-500">Schedule and track open doors, workshops, and school visits.</p>
-	</div>
+<div class="p-4 space-y-6">
 
-	<!-- Summary cards -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-		<div class="rounded-lg border border-gray-200 bg-white p-4">
-			<div class="flex items-center gap-2">
-				<span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.open_doors}"></span>
-				<span class="text-sm text-gray-500">Open Doors</span>
-			</div>
-			<p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('open_doors')}</p>
-		</div>
-		<div class="rounded-lg border border-gray-200 bg-white p-4">
-			<div class="flex items-center gap-2">
-				<span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.workshop}"></span>
-				<span class="text-sm text-gray-500">Workshops</span>
-			</div>
-			<p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('workshop')}</p>
-		</div>
-		<div class="rounded-lg border border-gray-200 bg-white p-4">
-			<div class="flex items-center gap-2">
-				<span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.school_visit}"></span>
-				<span class="text-sm text-gray-500">School Visits</span>
-			</div>
-			<p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('school_visit')}</p>
-		</div>
-	</div>
+  
+        <!-- Summary cards -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="rounded-lg border border-gray-200 bg-white p-4">
+                <div class="flex items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.open_doors}"></span>
+                    <span class="text-sm text-gray-500">Open Doors</span>
+                </div>
+                <p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('open_doors')}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-white p-4">
+                <div class="flex items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.workshop}"></span>
+                    <span class="text-sm text-gray-500">Workshops</span>
+                </div>
+                <p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('workshop')}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-white p-4">
+                <div class="flex items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background-color: {EVENT_TYPE_COLORS.school_visit}"></span>
+                    <span class="text-sm text-gray-500">School Visits</span>
+                </div>
+                <p class="mt-2 text-2xl font-semibold text-gray-900">{countByType('school_visit')}</p>
+            </div>
+        </div>
 
-	<!-- Calendar -->
-	<div class="rounded-lg border border-gray-200 bg-white p-4">
-		<div class="mb-4 flex items-center justify-between">
-			<h2 class="text-base font-medium text-gray-900">{monthName}</h2>
-			<div class="flex gap-1">
-				<button class="rounded-md border border-gray-200 px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-50" onclick={prevMonth}>‹</button>
-				<button class="rounded-md border border-gray-200 px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-50" onclick={nextMonth}>›</button>
-			</div>
-		</div>
+        <!-- Calendar -->
+        <div class="rounded-lg border border-gray-200 bg-white p-4">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-base font-medium text-gray-900">{monthName}</h2>
+                <div class="flex gap-1">
+                    <button class="rounded-md border border-gray-200 px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-50" onclick={prevMonth}>‹</button>
+                    <button class="rounded-md border border-gray-200 px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-50" onclick={nextMonth}>›</button>
+                </div>
+            </div>
 
-		<div class="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-gray-200 bg-gray-200 text-xs">
-			{#each weekdayLabels as label}
-				<div class="bg-gray-50 px-2 py-1.5 text-center font-medium text-gray-500">{label}</div>
-			{/each}
+            <div class="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-gray-200 bg-gray-200 text-xs">
+                {#each weekdayLabels as label}
+                    <div class="bg-gray-50 px-2 py-1.5 text-center font-medium text-gray-500">{label}</div>
+                {/each}
 
-			{#each gridDays as day}
-				{#if day === null}
-					<div class="min-h-[88px] bg-white"></div>
-				{:else}
-					<button
-						class="flex min-h-[88px] flex-col items-start gap-1 bg-white p-1.5 text-left hover:bg-blue-50"
-						onclick={() => openModalForDay(day)}
-					>
-						<span
-							class="flex h-5 w-5 items-center justify-center rounded-full text-[11px]"
-							class:bg-blue-600={isToday(day)}
-							class:text-white={isToday(day)}
-							class:text-gray-700={!isToday(day)}
-						>
-							{day}
-						</span>
-						<div class="flex w-full flex-col gap-0.5">
-							{#each eventsOn(day).slice(0, 3) as ev}
-								<span class="truncate rounded px-1 py-0.5 text-[10px] text-white" style="background-color: {EVENT_TYPE_COLORS[ev.type]}">
-									{ev.title}
-								</span>
-							{/each}
-							{#if eventsOn(day).length > 3}
-								<span class="text-[10px] text-gray-400">+{eventsOn(day).length - 3} more</span>
-							{/if}
-						</div>
-					</button>
-				{/if}
-			{/each}
-		</div>
-	</div>
+                {#each gridDays as day}
+                    {#if day === null}
+                        <div class="min-h-[88px] bg-white"></div>
+                    {:else}
+                        <button
+                            class="flex min-h-[88px] flex-col items-start gap-1 bg-white p-1.5 text-left hover:bg-blue-50"
+                            onclick={() => openModalForDay(day)}
+                        >
+                            <span
+                                class="flex h-5 w-5 items-center justify-center rounded-full text-[11px]"
+                                class:bg-blue-600={isToday(day)}
+                                class:text-white={isToday(day)}
+                                class:text-gray-700={!isToday(day)}
+                            >
+                                {day}
+                            </span>
+                            <div class="flex w-full flex-col gap-0.5">
+                                {#each eventsOn(day).slice(0, 3) as ev}
+                                    <span class="truncate rounded px-1 py-0.5 text-[10px] text-white" style="background-color: {EVENT_TYPE_COLORS[ev.type]}">
+                                        {ev.title}
+                                    </span>
+                                {/each}
+                                {#if eventsOn(day).length > 3}
+                                    <span class="text-[10px] text-gray-400">+{eventsOn(day).length - 3} more</span>
+                                {/if}
+                            </div>
+                        </button>
+                    {/if}
+                {/each}
+            </div>
+        </div>
 
-	<!-- Events table -->
-	<div class="rounded-lg border border-gray-200 bg-white">
-		<div class="border-b border-gray-200 px-4 py-3">
-			<h2 class="text-base font-medium text-gray-900">Scheduled events</h2>
-		</div>
-		{#if sortedEvents.length === 0}
-			<p class="px-4 py-6 text-sm text-gray-500">No events yet. Click a day on the calendar to add one.</p>
-		{:else}
-			<table class="w-full text-left text-sm">
-				<thead>
-					<tr class="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-400">
-						<th class="px-4 py-2 font-medium">Date</th>
-						<th class="px-4 py-2 font-medium">Title</th>
-						<th class="px-4 py-2 font-medium">Type</th>
-						<th class="px-4 py-2 font-medium">School / Detail</th>
-						<th class="px-4 py-2 font-medium"></th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each sortedEvents as ev (ev.id)}
-						<tr class="border-b border-gray-100 last:border-0">
-							<td class="px-4 py-2.5 text-gray-700">{formatDate(ev.eventDate)}</td>
-							<td class="px-4 py-2.5 text-gray-900">{ev.title}</td>
-							<td class="px-4 py-2.5">
-								<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium text-white" style="background-color: {EVENT_TYPE_COLORS[ev.type]}">
-									{EVENT_TYPE_LABELS[ev.type]}
-								</span>
-							</td>
-							<td class="px-4 py-2.5 text-gray-500">{ev.schoolName ?? ev.otherLabel ?? '—'}</td>
-							<td class="px-4 py-2.5 text-right">
-								<button class="text-xs text-red-600 hover:underline" onclick={() => removeEvent(ev.id)}>Remove</button>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-	</div>
+        <!-- Events table -->
+        <div class="rounded-lg border border-gray-200 bg-white">
+            <div class="border-b border-gray-200 px-4 py-3">
+                <h2 class="text-base font-medium text-gray-900">Scheduled events</h2>
+            </div>
+            {#if sortedEvents.length === 0}
+                <p class="px-4 py-6 text-sm text-gray-500">No events yet. Click a day on the calendar to add one.</p>
+            {:else}
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-400">
+                            <th class="px-4 py-2 font-medium">Date</th>
+                            <th class="px-4 py-2 font-medium">Title</th>
+                            <th class="px-4 py-2 font-medium">Type</th>
+                            <th class="px-4 py-2 font-medium">School / Detail</th>
+                            <th class="px-4 py-2 font-medium"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each sortedEvents as ev (ev.id)}
+                            <tr class="border-b border-gray-100 last:border-0">
+                                <td class="px-4 py-2.5 text-gray-700">{formatDate(ev.eventDate)}</td>
+                                <td class="px-4 py-2.5 text-gray-900">{ev.title}</td>
+                                <td class="px-4 py-2.5">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium text-white" style="background-color: {EVENT_TYPE_COLORS[ev.type]}">
+                                        {EVENT_TYPE_LABELS[ev.type]}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2.5 text-gray-500">{ev.schoolName ?? ev.otherLabel ?? '—'}</td>
+                                <td class="px-4 py-2.5 text-right">
+                                    <button class="text-xs text-red-600 hover:underline" onclick={() => removeEvent(ev.id)}>Remove</button>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {/if}
+        </div>
+    
 </div>
-
 <!-- Add-event modal -->
 {#if showModal}
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">

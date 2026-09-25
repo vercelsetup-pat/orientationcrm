@@ -50,7 +50,7 @@ dialog[open] .translate-x-full {
 }
 
 .page{
-   width: 100%;
+    width: 100%;
     min-width: 0;
     padding-right: 10px;
     display: grid;

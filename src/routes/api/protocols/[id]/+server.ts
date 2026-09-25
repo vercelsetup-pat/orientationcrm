@@ -15,9 +15,7 @@ export async function GET({ params }) {
         }
 
         const [protocol] = await db
-            .select({
-                pdf: protocols.pdf
-            })
+            .select()
             .from(protocols)
             .where(eq(protocols.id, id));
 
@@ -28,26 +26,15 @@ export async function GET({ params }) {
             );
         }
 
-        if (!protocol.pdf) {
-            return json(
-                { message: "No PDF attached to this protocol" },
-                { status: 404 }
-            );
-        }
+        const { pdf, ...protocolWithoutPdf } = protocol;
 
-        return new Response(new Uint8Array(protocol.pdf), {
-            headers: {
-                "Content-Type": "application/pdf",
-                "Content-Disposition": `inline; filename="protocol-${id}.pdf"`,
-                "Cache-Control": "private, max-age=0, must-revalidate"
-            }
-        });
+        return json(protocolWithoutPdf);
 
     } catch (error) {
-        console.error("Error fetching PDF:", error);
+        console.error("Error fetching protocol:", error);
 
         return json(
-            { message: "Failed to fetch PDF" },
+            { message: "Failed to fetch protocol" },
             { status: 500 }
         );
     }

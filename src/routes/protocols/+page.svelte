@@ -15,6 +15,9 @@
     let submitting = $state(false);
     let formError = $state("");
 
+    let pdfModalOpen = $state(false);
+    let selectedPdfProtocolId = $state<number | null>(null);
+
     let editingProtocolId = $state<number | null>(null);
 
     let organization = $state("");
@@ -41,6 +44,15 @@
         "In Progress"
     ];
 
+    function openPdf(id: number) {
+        selectedPdfProtocolId = id;
+        pdfModalOpen = true;
+    }
+    function closePdfModal() {
+        pdfModalOpen = false;
+        selectedPdfProtocolId = null;
+    }
+    
     async function loadProtocols() {
         loading = true;
         error = "";
@@ -246,6 +258,7 @@
             submitting = false;
         }
     }
+
     async function deleteProtocol(id: number) {
 
         const confirmed = confirm("Are you sure you want to delete this protocol?");
@@ -367,7 +380,10 @@
                                     <td><span class="table-text">{protocol.phonenumber ?? "-"}</span></td>
                                     <td>
                                         {#if protocol.pdf}
-                                            <button type="button">
+                                            <button
+                                                type="button"
+                                                onclick={() => openPdf(protocol.id)}
+                                            >
                                                 View PDF
                                             </button>
                                         {:else}
@@ -474,5 +490,46 @@
                 </form>
             </div>
         </aside>
+    {/if}
+
+    {#if pdfModalOpen && selectedPdfProtocolId !== null}
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            role="presentation"
+            onclick={closePdfModal}
+        >
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                class="relative w-full max-w-5xl h-[90vh] bg-white rounded-lg overflow-hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Protocol PDF"
+                onclick={(event) => event.stopPropagation()}
+            >
+                <div class="flex items-center justify-between px-4 py-3 border-b">
+                    <h2 class="font-semibold">
+                        Protocol PDF
+                    </h2>
+
+                    <button
+                        type="button"
+                        class="text-xl"
+                        aria-label="Close PDF"
+                        onclick={closePdfModal}
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="w-full h-[calc(100%-57px)]">
+                    <iframe
+                        src={`/api/protocols/${selectedPdfProtocolId}/pdf`}
+                        title="Protocol PDF"
+                        class="w-full h-full"
+                    ></iframe>
+                </div>
+            </div>
+        </div>
     {/if}
 </div>

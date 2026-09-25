@@ -15,7 +15,9 @@ export async function GET({ params }) {
         }
 
         const [protocol] = await db
-            .select()
+            .select({
+                pdf: protocols.pdf
+            })
             .from(protocols)
             .where(eq(protocols.id, id));
 
@@ -26,18 +28,30 @@ export async function GET({ params }) {
             );
         }
 
-        return json(protocol);
+        if (!protocol.pdf) {
+            return json(
+                { message: "No PDF attached to this protocol" },
+                { status: 404 }
+            );
+        }
+
+        return new Response(new Uint8Array(protocol.pdf), {
+            headers: {
+                "Content-Type": "application/pdf",
+                "Content-Disposition": `inline; filename="protocol-${id}.pdf"`,
+                "Cache-Control": "private, max-age=0, must-revalidate"
+            }
+        });
 
     } catch (error) {
-        console.error("Error fetching protocol:", error);
+        console.error("Error fetching PDF:", error);
 
         return json(
-            { message: "Failed to fetch protocol" },
+            { message: "Failed to fetch PDF" },
             { status: 500 }
         );
     }
 }
-
 
 export async function PATCH({ params, request }) {
     try {
@@ -78,10 +92,6 @@ export async function PATCH({ params, request }) {
             updatedAt: new Date()
         };
 
-        /*
-         * Only replace the existing PDF if
-         * the user selected a new PDF.
-         */
         if (pdfFile instanceof File && pdfFile.size > 0) {
             if (pdfFile.type !== "application/pdf") {
                 return json(

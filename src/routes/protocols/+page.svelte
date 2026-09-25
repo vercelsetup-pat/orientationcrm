@@ -6,7 +6,7 @@
     import { Badge } from "flowbite-svelte";
 
     let protocolsData = $state<Protocol[]>([]);
-
+    let tableSearchQuery = $state("");
     let loading = $state(true);
     let error = $state("");
 
@@ -23,9 +23,21 @@
     let pdf = $state("");
     let status = $state("Not Signed");
 
+    let rowsPerPage = $state(10);
+
+    let filteredProtocolsTable = $derived(
+        protocolsData.filter((s) => s.organization.toLowerCase().includes(tableSearchQuery.toLowerCase()))
+    );
+
+     let displayedProtocols = $derived(
+        filteredProtocolsTable.slice(0, rowsPerPage)
+    );
+
+
     const statusOptions = [
         "Not Signed",
-        "Signed"
+        "Signed",
+        "In Progress"
     ];
 
     async function loadProtocols() {
@@ -289,6 +301,22 @@
             </div>
         </div>
 
+        <div class="flex items-center justify-between mb-4">
+             <div class="relative w-full max-w-[320px]">
+                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+                {#if tableSearchQuery}
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick={() => (tableSearchQuery = "")}
+                        aria-label="Clear search"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+        </div>
+
         <div class="card-secondary">
             <div class="table-wrapper">
                 <table>
@@ -321,7 +349,7 @@
                                 <td colspan="7" class="empty-cell" >No protocols found.</td>
                             </tr>
                         {:else}
-                            {#each protocolsData as protocol}
+                            {#each displayedProtocols as protocol}
                                 <tr>
                                     <td><span class="student-name">{protocol.organization}</span></td>
                                     <td><span class="table-text">{protocol.representative ?? "-"}</span></td>

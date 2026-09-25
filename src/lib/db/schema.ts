@@ -1,4 +1,22 @@
-import { pgTable, serial, varchar, integer, timestamp, text, date } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    serial,
+    varchar,
+    integer,
+    timestamp,
+    text,
+    date,
+    customType
+} from "drizzle-orm/pg-core";
+
+const bytea = customType<{
+    data: Buffer;
+    driverData: Buffer;
+}>({
+    dataType() {
+        return "bytea";
+    }
+});
 
 export const schools = pgTable("schools", {
     id: serial("id").primaryKey(),
@@ -22,32 +40,12 @@ export const students = pgTable("students", {
 
 export const protocols = pgTable("protocols", {
     id: serial("id").primaryKey(),
-
-    organization: varchar("organization", {
-        length: 255
-    }).notNull(),
-
-    representative: varchar("representative", {
-        length: 255
-    }),
-
+    organization: varchar("organization", { length: 255 }).notNull(),
+    representative: varchar("representative", { length: 255 }),
     date: date("date").notNull(),
-
-    phonenumber: varchar("phonenumber", {
-        length: 50
-    }),
-
-    pdf: text("pdf"),
-
-    createdAt: timestamp("createdat", {
-        withTimezone: false
-    }).defaultNow(),
-
-    updatedAt: timestamp("updatedat", {
-        withTimezone: false
-    }).defaultNow(),
-
-    status: varchar("status", {
-        length: 20
-    }).notNull().default("Not Signed")
+    phonenumber: varchar("phonenumber", { length: 50 }),
+    pdf: bytea("pdf"),
+    createdAt: timestamp("createdat", { withTimezone: false }).defaultNow(),
+    updatedAt: timestamp("updatedat", { withTimezone: false }).defaultNow(),
+    status: varchar("status", {length: 20 }).notNull().default("Not Signed")
 });

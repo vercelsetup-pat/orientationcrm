@@ -9,6 +9,7 @@
     let tableSearchQuery = $state("");
     let loading = $state(true);
     let error = $state("");
+    let pdfFile = $state<File | null>(null);
 
     let openNonModal = $state(false);
     let submitting = $state(false);
@@ -20,7 +21,7 @@
     let representative = $state("");
     let date = $state("");
     let phoneNumber = $state("");
-    let pdf = $state("");
+   
     let status = $state("Not Signed");
 
     let rowsPerPage = $state(10);
@@ -75,7 +76,7 @@
         representative = "";
         date = "";
         phoneNumber = "";
-        pdf = "";
+        pdfFile = null; 
         status = "Not Signed";
         editingProtocolId = null;
         formError = "";
@@ -131,7 +132,6 @@
         representative = protocol.representative ?? "";
         date = protocol.date ?? "";
         phoneNumber = protocol.phonenumber ?? "";
-        pdf = protocol.pdf ?? "";
         status = protocol.status ?? "Not Signed";
         submitting = false;
         openNonModal = true;
@@ -139,53 +139,56 @@
     }
 
     async function addProtocol() {
-
         formError = "";
-        if ( !organization.trim() || !date) {
-            formError ="Please fill in all required fields.";
+
+        if (!organization.trim() || !date) {
+            formError = "Please fill in all required fields.";
             return;
         }
 
         submitting = true;
 
         try {
+            const formData = new FormData();
 
-            const response = await fetch("/api/protocols",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+            formData.append("organization", organization.trim());
+            formData.append("representative", representative.trim());
+            formData.append("date", date);
+            formData.append("phoneNumber", phoneNumber.trim());
+            formData.append("status", status);
 
-                    body: JSON.stringify({
-                        organization: organization.trim(),
-                        representative: representative.trim() || null,
-                        date,
-                        phoneNumber: phoneNumber.trim() || null,
-                        pdf: pdf.trim() || null,
-                        status
-                    })
-                }
-            );
+            if (pdfFile) {
+                formData.append("pdf", pdfFile);
+            }
+
+            const response = await fetch("/api/protocols", {
+                method: "POST",
+                body: formData
+            });
 
             const data = await response.json();
+
             if (!response.ok) {
-                throw new Error( data.message || "Failed to create protocol" );
+                throw new Error(
+                    data.message || "Failed to create protocol"
+                );
             }
 
             protocolsData = [...protocolsData, data];
+
             closePanel();
 
         } catch (err) {
-            formError = err instanceof Error ? err.message : "Failed to create protocol";
+            formError =
+                err instanceof Error
+                    ? err.message
+                    : "Failed to create protocol";
         } finally {
             submitting = false;
         }
-
     }
 
     async function updateProtocol() {
-
         if (editingProtocolId === null) {
             return;
         }
@@ -200,42 +203,49 @@
         submitting = true;
 
         try {
+            const formData = new FormData();
 
-            const response = await fetch(`/api/protocols/${editingProtocolId}`,
+            formData.append("organization", organization.trim());
+            formData.append("representative", representative.trim());
+            formData.append("date", date);
+            formData.append("phoneNumber", phoneNumber.trim());
+            formData.append("status", status);
+
+            if (pdfFile) {
+                formData.append("pdf", pdfFile);
+            }
+
+            const response = await fetch(
+                `/api/protocols/${editingProtocolId}`,
                 {
                     method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body : JSON.stringify({
-                        organization: organization.trim(),
-                        representative:representative.trim() || null,
-                        date,
-                        phoneNumber:phoneNumber.trim() || null,
-                        pdf:pdf.trim() || null,
-                        status
-                    })
+                    body: formData
                 }
             );
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error( data.message || "Failed to update protocol");
+                throw new Error(
+                    data.message || "Failed to update protocol"
+                );
             }
 
-            protocolsData = protocolsData.map((protocol) => protocol.id === data.id ? data: protocol );
+            protocolsData = protocolsData.map((protocol) =>
+                protocol.id === data.id ? data : protocol
+            );
+
             closePanel();
 
         } catch (err) {
-            formError = err instanceof Error ? err.message : "Failed to update protocol";
+            formError =
+                err instanceof Error
+                    ? err.message
+                    : "Failed to update protocol";
         } finally {
             submitting = false;
         }
-
     }
-
     async function deleteProtocol(id: number) {
 
         const confirmed = confirm("Are you sure you want to delete this protocol?");
@@ -355,7 +365,15 @@
                                     <td><span class="table-text">{protocol.representative ?? "-"}</span></td>
                                     <td><span class="table-text">{formatDate(protocol.date)}</span></td>
                                     <td><span class="table-text">{protocol.phonenumber ?? "-"}</span></td>
-                                    <td><span class="table-text">{protocol.pdf ?? "-"}</span></td>
+                                    <td>
+                                        {#if protocol.pdf}
+                                            <button type="button">
+                                                View PDF
+                                            </button>
+                                        {:else}
+                                            <span class="table-text">-</span>
+                                        {/if}
+                                    </td>
                                     <td><Badge>{protocol.status ?? "-"}</Badge></td>
                                     <td>
                                         <div class="row-actions">
@@ -416,7 +434,15 @@
 
                     <div class="form-field">
                         <label for="protocol-pdf">PDF</label>
-                        <input id="protocol-pdf" type="text" placeholder="Enter PDF link" bind:value={pdf}/>
+                        <input
+                            id="protocol-pdf"
+                            type="file"
+                            accept="application/pdf"
+                            onchange={(event) => {
+                                const input = event.currentTarget as HTMLInputElement;
+                                pdfFile = input.files?.[0] ?? null;
+                            }}
+                        />
                     </div>
 
                     <div class="form-field">

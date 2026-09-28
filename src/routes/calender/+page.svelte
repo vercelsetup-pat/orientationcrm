@@ -177,8 +177,6 @@
 </script>
 
 <div class="p-4 space-y-6">
-
-  
         <!-- Summary cards -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div class="rounded-lg border border-gray-200 bg-white p-4">

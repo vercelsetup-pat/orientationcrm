@@ -44,6 +44,19 @@
         "In Progress"
     ];
 
+    function getStatusColor(status: string | null) {
+        switch (status) {
+            case "Signed":
+                return "green";
+            case "In Progress":
+                return "yellow";
+            case "Not Signed":
+                return "red";
+            default:
+                return "gray";
+        }
+    }
+
     function openPdf(id: number) {
         selectedPdfProtocolId = id;
         pdfModalOpen = true;
@@ -390,7 +403,7 @@
                                             <span class="table-text">-</span>
                                         {/if}
                                     </td>
-                                    <td><Badge>{protocol.status ?? "-"}</Badge></td>
+                                    <td> <Badge color={getStatusColor(protocol.status)}>{protocol.status ?? "-"}</Badge></td>
                                     <td>
                                         <div class="row-actions">
                                             <button type="button" class="action-button" aria-label="Edit protocol" onclick={() => openEditPanel(protocol.id)}>

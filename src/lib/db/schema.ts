@@ -49,14 +49,24 @@ export const students = pgTable("students", {
 
 export const protocols = pgTable("protocols", {
     id: serial("id").primaryKey(),
+
     organization: varchar("organization", { length: 255 }).notNull(),
+
     representative: varchar("representative", { length: 255 }),
-    date: date("date").notNull(),
+
+    date: date("date"),
+
     phonenumber: varchar("phonenumber", { length: 50 }),
+
     pdf: bytea("pdf"),
+
     createdAt: timestamp("createdat", { withTimezone: false }).defaultNow(),
+
     updatedAt: timestamp("updatedat", { withTimezone: false }).defaultNow(),
-    status: varchar("status", {length: 20 }).notNull().default("Not Signed")
+
+    status: varchar("status", { length: 20 })
+        .notNull()
+        .default("Not Signed")
 });
 
 export const events = pgTable("events", {

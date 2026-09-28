@@ -24,18 +24,32 @@ export async function POST({ request }) {
 
         const organization = formData.get("organization")?.toString();
         const representative = formData.get("representative")?.toString();
-        const date = formData.get("date")?.toString();
+        const dateValue = formData.get("date")?.toString();
         const phoneNumber = formData.get("phoneNumber")?.toString();
-        const status = formData.get("status")?.toString();
+        const status = formData.get("status")?.toString() || "Not Signed";
 
         const pdfFile = formData.get("pdf");
 
-        if (!organization || !date) {
+        // Organization is always required
+        if (!organization) {
             return json(
-                { message: "Organization and date are required" },
+                { message: "Organization is required" },
                 { status: 400 }
             );
         }
+
+        // Date is required only when the protocol is signed
+        if (status !== "Not Signed" && !dateValue) {
+            return json(
+                { message: "Date is required for signed protocols" },
+                { status: 400 }
+            );
+        }
+
+        // If Not Signed, store NULL instead of an empty string
+        const date = status === "Not Signed"
+            ? null
+            : dateValue || null;
 
         let pdfData: Buffer | null = null;
 
@@ -59,7 +73,7 @@ export async function POST({ request }) {
                 date,
                 phonenumber: phoneNumber || null,
                 pdf: pdfData,
-                status: status || "Not Signed"
+                status
             })
             .returning();
 

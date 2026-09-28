@@ -247,9 +247,14 @@
     async function addProtocol() {
         formError = "";
 
-        if (!organization.trim() || !date) {
+        if (!organization.trim()) {
             formError = "Please fill in all required fields.";
             return;
+        }
+
+        if (status !== "Not Signed" && !date) { 
+            formError = "Please enter the protocol date."; 
+            return; 
         }
 
         submitting = true;
@@ -301,9 +306,13 @@
 
         formError = "";
 
-        if (!organization.trim() || !date) {
+        if (!organization.trim()) {
             formError = "Please fill in all required fields.";
             return;
+        }
+        if (status !== "Not Signed" && !date) { 
+            formError = "Please enter the protocol date."; 
+            return; 
         }
 
         submitting = true;
@@ -551,7 +560,7 @@
 
                     <div class="form-field">
                         <label for="protocol-date">Date</label>
-                        <input id="protocol-date" type="date" bind:value={date} required/>
+                        <input id="protocol-date" type="date" bind:value={date}/>
                     </div>
 
                     <div class="form-field">

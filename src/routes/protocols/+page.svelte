@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import type { Protocol } from "$lib/types";
     import { Button } from "flowbite-svelte";
-    import { PlusOutline } from "flowbite-svelte-icons";
+    import { PlusOutline, FilePdfOutline  } from "flowbite-svelte-icons";
     import { Badge } from "flowbite-svelte";
 
     let protocolsData = $state<Protocol[]>([]);
@@ -397,7 +397,7 @@
                                                 type="button"
                                                 onclick={() => openPdf(protocol.id)}
                                             >
-                                                View PDF
+                                                <FilePdfOutline class="shrink-0 h-5 w-5" color="#000000"/>
                                             </button>
                                         {:else}
                                             <span class="table-text">-</span>

@@ -1,10 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Protocol } from "$lib/types";
-    import { Button } from "flowbite-svelte";
-    import { PlusOutline, FilePdfOutline  } from "flowbite-svelte-icons";
-    import { Badge } from "flowbite-svelte";
-
+    import { Button,Badge, Select,  Checkbox, Radio  } from "flowbite-svelte";
+    import { PlusOutline, FilePdfOutline, DownloadOutline  } from "flowbite-svelte-icons";
+ 
     let protocolsData = $state<Protocol[]>([]);
     let tableSearchQuery = $state("");
     let loading = $state(true);
@@ -14,6 +13,101 @@
     let openNonModal = $state(false);
     let submitting = $state(false);
     let formError = $state("");
+
+    let exportModalOpen = $state(false);
+    let exportFormat = $state<"pdf" | "excel">("pdf");
+    let exportStatus = $state("All");
+    let exporting = $state(false);
+    let exportError = $state("");
+
+    const exportColumns = [
+        { key: "organization", label: "Organization" },
+        { key: "representative", label: "Representative" },
+        { key: "date", label: "Date" },
+        { key: "phonenumber", label: "Phone Number" },
+        { key: "status", label: "Status" }
+    ] as const;
+
+    let selectedColumns = $state<string[]>(exportColumns.map((c) => c.key));
+
+    function openExportModal() {
+        exportStatus = "All";
+        exportError = "";
+        exportModalOpen = true;
+    }
+
+    function closeExportModal() {
+        exportModalOpen = false;
+    }
+
+    function toggleColumn(key: string) {
+        selectedColumns = selectedColumns.includes(key)
+            ? selectedColumns.filter((k) => k !== key)
+            : [...selectedColumns, key];
+    }
+
+    function getExportData() {
+        const cols = exportColumns.filter((c) => selectedColumns.includes(c.key));
+
+        const rows = protocolsData
+            .filter((p) => exportStatus === "All" || p.status === exportStatus)
+            .map((p) =>
+                cols.map((c) =>
+                    c.key === "date" ? formatDate(p.date) : String(p[c.key] ?? "-")
+                )
+            );
+
+        return { headers: cols.map((c) => c.label), rows };
+    }
+
+    async function exportReport() {
+        exportError = "";
+
+        if (selectedColumns.length === 0) {
+            exportError = "Select at least one column.";
+            return;
+        }
+
+        const { headers, rows } = getExportData();
+
+        if (rows.length === 0) {
+            exportError = "No protocols match the selected status.";
+            return;
+        }
+
+        exporting = true;
+
+        try {
+            const suffix = exportStatus === "All" ? "all" : exportStatus.toLowerCase().replace(/\s+/g, "-");
+            const fileName = `protocols-report-${suffix}`;
+
+            if (exportFormat === "excel") {
+                const XLSX = await import("xlsx");
+                const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                const book = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(book, sheet, "Protocols");
+                XLSX.writeFile(book, `${fileName}.xlsx`);
+            } else {
+                const { jsPDF } = await import("jspdf");
+                const autoTable = (await import("jspdf-autotable")).default;
+
+                const doc = new jsPDF({ orientation: headers.length > 4 ? "landscape" : "portrait" });
+                doc.setFontSize(14);
+                doc.text("Protocols Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Status: ${exportStatus}  |  Total: ${rows.length}`, 14, 22);
+
+                autoTable(doc, { head: [headers], body: rows, startY: 27 });
+                doc.save(`${fileName}.pdf`);
+            }
+
+            closeExportModal();
+        } catch (err) {
+            exportError = "Failed to export report.";
+        } finally {
+            exporting = false;
+        }
+    }
 
     let pdfModalOpen = $state(false);
     let selectedPdfProtocolId = $state<number | null>(null);
@@ -26,38 +120,23 @@
     let phoneNumber = $state("");
    
     let status = $state("Not Signed");
-
     let rowsPerPage = $state(10);
     let statusFilter = $state("All");
 
     let filteredProtocolsTable = $derived(
         protocolsData.filter((protocol) => {
-            const matchesSearch = protocol.organization
-                .toLowerCase()
-                .includes(tableSearchQuery.toLowerCase());
-
-            const matchesStatus =
-                statusFilter === "All" ||
-                protocol.status === statusFilter;
-
+            const matchesSearch = protocol.organization.toLowerCase().includes(tableSearchQuery.toLowerCase());
+            const matchesStatus = statusFilter === "All" || protocol.status === statusFilter;
             return matchesSearch && matchesStatus;
         })
     );
 
-
-     let displayedProtocols = $derived(
+    let displayedProtocols = $derived(
         filteredProtocolsTable.slice(0, rowsPerPage)
     );
 
+    const statusOptions = [ "Not Signed", "Signed", "In Progress"];
 
-    const statusOptions = [
-        "Not Signed",
-        "Signed",
-        "In Progress"
-    ];
-
-
-   
     function openPdf(id: number) {
         selectedPdfProtocolId = id;
         pdfModalOpen = true;
@@ -331,7 +410,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center shrink-0">
+                <div class="flex items-center gap-2 shrink-0">
+                    <Button color="light" class="h-9" onclick={openExportModal}>
+                        <DownloadOutline size="sm" />&nbsp;Export
+                    </Button>
                     <Button color="light" class="h-9" onclick={openAddPanel}>
                         <PlusOutline size="sm" />&nbsp;Add Protocol
                     </Button>
@@ -340,7 +422,6 @@
         </div>
 
         <div class="flex items-center justify-between mb-4">
-           
             <div class="w-2xs">
                 <input type="text" placeholder="Search organizations..." bind:value={tableSearchQuery}/>
 
@@ -558,6 +639,94 @@
                         title="Protocol PDF"
                         class="w-full h-full"
                     ></iframe>
+                </div>
+            </div>
+        </div>
+    {/if}
+
+    {#if exportModalOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation" onclick={closeExportModal}>
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div class="w-full max-w-md bg-white rounded-lg overflow-hidden" role="dialog" aria-modal="true" aria-label="Export report"  onclick={(event) => event.stopPropagation()} >
+                <div class="flex items-center justify-between px-5 py-3 border-b">
+                    <h2 class="font-semibold">Export Report</h2>
+                    <button type="button" class="text-xl" aria-label="Close" onclick={closeExportModal}>×</button>
+                </div>
+
+                <div class="p-5 space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-semibold text-gray-900">Columns</p>
+                            <button type="button" class="text-xs text-blue-700 hover:underline" onclick={() =>
+                                (selectedColumns = selectedColumns.length === exportColumns.length  ? []  : exportColumns.map((c) => c.key))}>
+                                {selectedColumns.length === exportColumns.length ? "Clear all" : "Select all"}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            {#each exportColumns as col}
+                                <label class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors {selectedColumns.includes(col.key)
+                                    ? 'border-blue-300 bg-blue-50'
+                                    : 'border-gray-200 bg-white hover:bg-gray-50'}">
+                                    <input type="checkbox" style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;" checked={selectedColumns.includes(col.key)} onchange={() => toggleColumn(col.key)}/>
+                                    <span>{col.label}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label for="export-status" class="text-sm font-semibold text-gray-900 mb-2 block">
+                            Status
+                        </label>
+                        <select id="export-status" bind:value={exportStatus}>
+                            <option value="All">All statuses</option>
+                            {#each statusOptions as option}
+                                <option value={option}>{option}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <!-- Format -->
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 mb-2">Format</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            {#each [{ value: "pdf", label: "PDF" }, { value: "excel", label: "Excel" }] as opt}
+                                <label
+                                    class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors
+                                        {exportFormat === opt.value
+                                            ? 'border-blue-300 bg-blue-50'
+                                            : 'border-gray-200 bg-white hover:bg-gray-50'}"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="export-format"
+                                        value={opt.value}
+                                        style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;"
+                                        bind:group={exportFormat}
+                                    />
+                                    <span>{opt.label}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+
+                    {#if exportError}
+                        <div class="form-error">{exportError}</div>
+                    {/if}
+
+                    <div class="flex gap-2 pt-1">
+                        <Button
+                            class="w-full"
+                            onclick={exportReport}
+                            disabled={exporting || selectedColumns.length === 0}
+                        >
+                            {exporting ? "Exporting..." : "Export"}
+                        </Button>
+                        <Button color="alternative" onclick={closeExportModal}>Cancel</Button>
+                    </div>
                 </div>
             </div>
         </div>

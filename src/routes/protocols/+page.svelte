@@ -28,10 +28,22 @@
     let status = $state("Not Signed");
 
     let rowsPerPage = $state(10);
+    let statusFilter = $state("All");
 
     let filteredProtocolsTable = $derived(
-        protocolsData.filter((s) => s.organization.toLowerCase().includes(tableSearchQuery.toLowerCase()))
+        protocolsData.filter((protocol) => {
+            const matchesSearch = protocol.organization
+                .toLowerCase()
+                .includes(tableSearchQuery.toLowerCase());
+
+            const matchesStatus =
+                statusFilter === "All" ||
+                protocol.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        })
     );
+
 
      let displayedProtocols = $derived(
         filteredProtocolsTable.slice(0, rowsPerPage)
@@ -44,23 +56,13 @@
         "In Progress"
     ];
 
-    function getStatusColor(status: string | null) {
-        switch (status) {
-            case "Signed":
-                return "green";
-            case "In Progress":
-                return "yellow";
-            case "Not Signed":
-                return "red";
-            default:
-                return "gray";
-        }
-    }
 
+   
     function openPdf(id: number) {
         selectedPdfProtocolId = id;
         pdfModalOpen = true;
     }
+
     function closePdfModal() {
         pdfModalOpen = false;
         selectedPdfProtocolId = null;
@@ -338,18 +340,24 @@
         </div>
 
         <div class="flex items-center justify-between mb-4">
-             <div class="relative w-full max-w-[320px]">
-                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+           
+            <div class="w-2xs">
+                <input type="text" placeholder="Search organizations..." bind:value={tableSearchQuery}/>
+
                 {#if tableSearchQuery}
-                    <button
-                        type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick={() => (tableSearchQuery = "")}
-                        aria-label="Clear search"
-                    >
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick={() => (tableSearchQuery = "")} aria-label="Clear search">
                         ×
                     </button>
                 {/if}
+            </div>
+
+            <div class="w-36">
+            <select id="status-filter" bind:value={statusFilter}  >
+                <option value="All">Filter by Status</option>
+                {#each statusOptions as option}
+                    <option value={option}>{option}</option>
+                {/each}
+            </select>
             </div>
         </div>
 
@@ -403,7 +411,16 @@
                                             <span class="table-text">-</span>
                                         {/if}
                                     </td>
-                                    <td> <Badge color={getStatusColor(protocol.status)}>{protocol.status ?? "-"}</Badge></td>
+                                    <td>
+                                        {#if protocol.status === "Signed"} 
+                                            <Badge color="green">{protocol.status ?? "-"}</Badge>
+                                        {:else if protocol.status === "Not Signed"}
+                                            <Badge color="red">{protocol.status ?? "-"}</Badge>
+                                        {:else}
+                                            <Badge color="yellow">{protocol.status ?? "-"}</Badge>
+                                        {/if}
+                                    
+                                    </td>
                                     <td>
                                         <div class="row-actions">
                                             <button type="button" class="action-button" aria-label="Edit protocol" onclick={() => openEditPanel(protocol.id)}>

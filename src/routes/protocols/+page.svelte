@@ -511,12 +511,11 @@
                                         {/if}
                                     
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-2">
                                         <div class="row-actions">
                                             <button type="button" class="action-button" aria-label="Edit protocol" onclick={() => openEditPanel(protocol.id)}>
                                                 ✎
                                             </button>
-
                                             <button type="button" class="action-button delete-button" aria-label="Delete protocol" onclick={() =>deleteProtocol(protocol.id)}>
                                                 ×
                                             </button>

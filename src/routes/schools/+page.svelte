@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { Avatar, Button } from 'flowbite-svelte';
-    import { PlusOutline } from 'flowbite-svelte-icons';
+    import { PlusOutline, DownloadOutline } from 'flowbite-svelte-icons';
     import type { School } from "$lib/types";
 
     
@@ -20,11 +20,11 @@
     let rowsPerPage = $state(10);
 
     // #region List / table state
-    let { dark } = $props<{ dark: boolean }>();
+ 
     let schoolsData = $state<School[]>([]);
     let loading = $state(true);
     let error = $state("");
-    let searchQuery = $state("");      
+  
     
     // #endregion
 
@@ -38,9 +38,23 @@
     let editLogoUrl = $state("");
     // #endregion
 
+    let exportModalOpen = $state(false);
+    let exportFormat = $state<"pdf" | "excel">("pdf");
+    let exporting = $state(false);
+    let exportError = $state("");
+
+    const exportColumns = [
+        { key: "schoolName", label: "School Name" },
+        { key: "contactName", label: "Contact Name" },
+        { key: "contactPhone", label: "Phone" },
+        { key: "contactEmail", label: "Email" }
+    ] as const;
+
     const headers = ["", "School Name", "Contact Name", "Phone", "Email", "", ""];
 
-   
+    let selectedColumns = $state<string[]>(exportColumns.map((c) => c.key));
+
+    
     let filteredSchoolsTable = $derived(
         schoolsData.filter((s) => s.schoolName.toLowerCase().includes(tableSearchQuery.toLowerCase()))
     );
@@ -95,8 +109,15 @@
             const response = await fetch("/api/schools", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ schoolName, contactName, contactPhone, contactEmail, logoUrl })
+                body: JSON.stringify({ 
+                    schoolName, 
+                    contactName, 
+                    contactPhone, 
+                    contactEmail, 
+                    logoUrl 
+                })
             });
+
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Failed to create school");
 
@@ -118,7 +139,13 @@
             const response = await fetch(`/api/schools/${editingSchoolId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ schoolName, contactName, contactPhone, contactEmail, logoUrl })
+                body: JSON.stringify({ 
+                    schoolName, 
+                    contactName, 
+                    contactPhone, 
+                    contactEmail, 
+                    logoUrl 
+                })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Failed to update school");
@@ -223,6 +250,79 @@
         }
     }
 
+    function openExportModal() {
+        exportError = "";
+        exportModalOpen = true;
+    }
+ 
+    function closeExportModal() {
+        exportModalOpen = false;
+    }
+ 
+    function toggleColumn(key: string) {
+        selectedColumns = selectedColumns.includes(key)
+            ? selectedColumns.filter((k) => k !== key)
+            : [...selectedColumns, key];
+    }
+ 
+    function getExportData() {
+        const cols = exportColumns.filter((c) => selectedColumns.includes(c.key));
+ 
+        const rows = schoolsData.map((s) =>
+            cols.map((c) => String(s[c.key] ?? "-"))
+        );
+ 
+        return { headers: cols.map((c) => c.label), rows };
+    }
+ 
+    async function exportReport() {
+        exportError = "";
+ 
+        if (selectedColumns.length === 0) {
+            exportError = "Select at least one column.";
+            return;
+        }
+ 
+        const { headers, rows } = getExportData();
+ 
+        if (rows.length === 0) {
+            exportError = "No schools to export.";
+            return;
+        }
+ 
+        exporting = true;
+ 
+        try {
+            const fileName = "schools-report";
+ 
+            if (exportFormat === "excel") {
+                const XLSX = await import("xlsx");
+                const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                const book = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(book, sheet, "Schools");
+                XLSX.writeFile(book, `${fileName}.xlsx`);
+            } else {
+                const { jsPDF } = await import("jspdf");
+                const autoTable = (await import("jspdf-autotable")).default;
+ 
+                const doc = new jsPDF({ orientation: headers.length > 4 ? "landscape" : "portrait" });
+                doc.setFontSize(14);
+                doc.text("Schools Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Total: ${rows.length}`, 14, 22);
+ 
+                autoTable(doc, { head: [headers], body: rows, startY: 27 });
+                doc.save(`${fileName}.pdf`);
+            }
+ 
+            closeExportModal();
+        } catch (err) {
+            exportError = "Failed to export report.";
+        } finally {
+            exporting = false;
+        }
+    }
+
     onMount(() => {
         loadSchools();
     });
@@ -249,9 +349,12 @@
                     </div>
                 </div>
                
-                  <div class="flex items-center shrink-0">
+                <div class="flex items-center gap-2 shrink-0">
+                    <Button color="light" class="h-9" onclick={openExportModal}>
+                        <DownloadOutline size="sm" />&nbsp;Export
+                    </Button>
                     <Button color="light" class="h-9" onclick={openAddDrawer}>
-                      <PlusOutline size = sm/>&nbsp;Add School
+                        <PlusOutline size="sm"/>&nbsp;Add School
                     </Button>
                 </div>
             </div>
@@ -278,7 +381,6 @@
                 <table>
                     <thead>
                         <tr>
-                            <th></th>
                             <th>School Name</th>
                             <th>Contact Name</th>
                             <th>Phone</th>
@@ -298,13 +400,7 @@
                         {:else}
                             {#each displayedSchools as school}
                                 <tr>
-                                    <td class="w-4 p-4">
-                                        {#if school.logoUrl}
-                                            <Avatar size="sm" src={school.logoUrl} />
-                                        {:else}
-                                            <Avatar size="sm">{school.schoolName.charAt(0).toUpperCase()}</Avatar>
-                                        {/if}
-                                    </td>
+                        
                                     <td><span class="student-name">{school.schoolName}</span></td>
                                     <td><span class="table-text">{school.contactName ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactPhone ?? "-"}</span></td>
@@ -325,7 +421,7 @@
                     </tbody>
                 </table>
             </div>
-            
+            <div class="table-footer"> Showing {displayedSchools.length} of {filteredSchoolsTable.length} schools </div>
         </div>
 
           <div class="flex items-center justify-between mb-4">
@@ -392,6 +488,81 @@
                 </form>
             </div>     
         </aside>
+    {/if}
+
+    {#if exportModalOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation" onclick={closeExportModal}>
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div class="w-full max-w-md bg-white rounded-lg overflow-hidden" role="dialog" aria-modal="true" aria-label="Export report" onclick={(event) => event.stopPropagation()}>
+                <div class="flex items-center justify-between px-5 py-3 border-b">
+                    <h2 class="font-semibold">Export Report</h2>
+                    <button type="button" class="text-xl" aria-label="Close" onclick={closeExportModal}>×</button>
+                </div>
+ 
+                <div class="p-5 space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-semibold text-gray-900">Columns</p>
+                            <button type="button" class="text-xs text-blue-700 hover:underline" onclick={() =>
+                                (selectedColumns = selectedColumns.length === exportColumns.length ? [] : exportColumns.map((c) => c.key))}>
+                                {selectedColumns.length === exportColumns.length ? "Clear all" : "Select all"}
+                            </button>
+                        </div>
+ 
+                        <div class="grid grid-cols-2 gap-2">
+                            {#each exportColumns as col}
+                                <label class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors {selectedColumns.includes(col.key)
+                                    ? 'border-blue-300 bg-blue-50'
+                                    : 'border-gray-200 bg-white hover:bg-gray-50'}">
+                                    <input type="checkbox" style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;" checked={selectedColumns.includes(col.key)} onchange={() => toggleColumn(col.key)}/>
+                                    <span>{col.label}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+ 
+                    <!-- Format -->
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 mb-2">Format</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            {#each [{ value: "pdf", label: "PDF" }, { value: "excel", label: "Excel" }] as opt}
+                                <label
+                                    class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors
+                                        {exportFormat === opt.value
+                                            ? 'border-blue-300 bg-blue-50'
+                                            : 'border-gray-200 bg-white hover:bg-gray-50'}"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="export-format"
+                                        value={opt.value}
+                                        style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;"
+                                        bind:group={exportFormat}
+                                    />
+                                    <span>{opt.label}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+ 
+                    {#if exportError}
+                        <div class="form-error">{exportError}</div>
+                    {/if}
+ 
+                    <div class="flex gap-2 pt-1">
+                        <Button
+                            class="w-full"
+                            onclick={exportReport}
+                            disabled={exporting || selectedColumns.length === 0}
+                        >
+                            {exporting ? "Exporting..." : "Export"}
+                        </Button>
+                        <Button color="alternative" onclick={closeExportModal}>Cancel</Button>
+                    </div>
+                </div>
+            </div>
+        </div>
     {/if}
 </div>
 

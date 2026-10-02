@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Protocol } from "$lib/types";
-    import { Button,Badge, Select,  Checkbox, Radio  } from "flowbite-svelte";
+    import { Button, Badge, Select, Input, Checkbox  } from "flowbite-svelte";
     import { PlusOutline, FilePdfOutline, DownloadOutline  } from "flowbite-svelte-icons";
+	import { SelectAllRounded } from "@mui/icons-material";
  
     let protocolsData = $state<Protocol[]>([]);
     let tableSearchQuery = $state("");
@@ -432,7 +433,7 @@
 
         <div class="flex items-center justify-between mb-4">
             <div class="w-2xs">
-                <input type="text" placeholder="Search organizations..." bind:value={tableSearchQuery}/>
+                <Input type="text" placeholder="Search organizations..." bind:value={tableSearchQuery}/>
 
                 {#if tableSearchQuery}
                     <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick={() => (tableSearchQuery = "")} aria-label="Clear search">
@@ -442,12 +443,12 @@
             </div>
 
             <div class="w-36">
-            <select id="status-filter" bind:value={statusFilter}  >
+            <Select id="status-filter" bind:value={statusFilter}  >
                 <option value="All">Filter by Status</option>
                 {#each statusOptions as option}
                     <option value={option}>{option}</option>
                 {/each}
-            </select>
+            </Select>
             </div>
         </div>
 
@@ -549,27 +550,27 @@
                 <form class="drawer-form" onsubmit={handleSubmit}>
                     <div class="form-field">
                         <label for="protocol-organization">Organization</label>
-                        <input id="protocol-organization" type="text" placeholder="Enter organization name" bind:value={organization} required/>
+                        <Input id="protocol-organization" type="text" placeholder="Enter organization name" bind:value={organization} required/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-representative">Representative</label>
-                        <input id="protocol-representative" type="text" placeholder="Enter representative name" bind:value={representative}/>
+                        <Input id="protocol-representative" type="text" placeholder="Enter representative name" bind:value={representative}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-date">Date</label>
-                        <input id="protocol-date" type="date" bind:value={date}/>
+                        <Input id="protocol-date" type="date" bind:value={date}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-phone">Phone Number</label>
-                        <input id="protocol-phone" type="tel" placeholder="Enter phone number" bind:value={phoneNumber}/>
+                        <Input id="protocol-phone" type="tel" placeholder="Enter phone number" bind:value={phoneNumber}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-pdf">PDF</label>
-                        <input
+                        <Input
                             id="protocol-pdf"
                             type="file"
                             accept="application/pdf"
@@ -582,7 +583,7 @@
 
                     <div class="form-field">
                         <label for="protocol-status">Status</label>
-                        <select id="protocol-status" bind:value={status} required>
+                        <Select id="protocol-status" bind:value={status} required>
                             <option value=""disabled>
                                 Choose option ...
                             </option>
@@ -590,7 +591,7 @@
                             {#each statusOptions as option}
                                 <option value={option}> {option}</option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
 
                     {#if formError}
@@ -689,12 +690,12 @@
                         <label for="export-status" class="text-sm font-semibold text-gray-900 mb-2 block">
                             Status
                         </label>
-                        <select id="export-status" bind:value={exportStatus}>
+                        <Select id="export-status" bind:value={exportStatus}>
                             <option value="All">All statuses</option>
                             {#each statusOptions as option}
                                 <option value={option}>{option}</option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
 
                     <!-- Format -->

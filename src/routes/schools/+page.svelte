@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Button, Badge } from 'flowbite-svelte';
+    import { Button, Badge, Select, Input } from 'flowbite-svelte';
     import { PlusOutline, DownloadOutline } from 'flowbite-svelte-icons';
     import type { School } from "$lib/types";
 
@@ -17,7 +17,7 @@
     let editingSchoolId = $state<number | null>(null);
     let tableSearchQuery = $state("");
 
-    let rowsPerPage = $state(10);
+    let rowsPerPage = $state(9);
 
     // #region List / table state
  
@@ -360,7 +360,7 @@
 
         <div class="flex items-center justify-between mb-4">
              <div class="relative w-full max-w-[320px]">
-                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
                 {#if tableSearchQuery}
                     <button
                         type="button"
@@ -441,12 +441,12 @@
           <div class="flex items-center justify-between mb-4">
              <div class="flex items-center justify-between py-4 border-t border-gray-100"> 
                 <div class="flex items-center  text-sm text-gray-500"> 
-                     <select bind:value={rowsPerPage}  > 
-                        <option value={10}>10</option> 
+                     <Select bind:value={rowsPerPage}  > 
+                        <option value={9}>9</option> 
                         <option value={15}>15</option> 
                         <option value={25}>25</option> 
                         <option value={35}>35</option> 
-                    </select> 
+                     </Select> 
                 </div> 
             </div>
         </div>
@@ -470,32 +470,32 @@
                 <form class="drawer-form" onsubmit={(event) => {  event.preventDefault();saveSchool();}}>
                     <div class="form-field">
                         <label for="school-name" class="mb-2 block">School Name</label>
-                        <input id="school-name" placeholder="School name" bind:value={schoolName} />
+                        <Input id="school-name" placeholder="School name" bind:value={schoolName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-name" class="mb-2 block">Contact name</label>
-                        <input id="contact-name" placeholder="Contact name" bind:value={contactName} />
+                        <Input id="contact-name" placeholder="Contact name" bind:value={contactName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-phone" class="mb-2 block">Phone number</label>
-                        <input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
+                        <Input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
                     </div>
                     <div class="form-field">
                         <label for="contact-email" class="mb-2 block">Email</label>
-                        <input id="contact-email" placeholder="Email" bind:value={contactEmail} />
+                        <Input id="contact-email" placeholder="Email" bind:value={contactEmail} />
                     </div>
                    <div class="form-field">
                         <label for="school-location" class="mb-2 block">
                             Location
                         </label>
 
-                        <select id="school-location" bind:value={location}>
+                        <Select id="school-location" bind:value={location}>
                             <option value="">Select location</option>
 
                             {#each locations as option}
                                 <option value={option}>{option}</option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
 
                     <div class="form-field">
@@ -503,13 +503,13 @@
                            Sector
                         </label>
 
-                        <select id="school-sector" bind:value={sector}>
+                        <Select id="school-sector" bind:value={sector}>
                             <option value="">Select location</option>
 
                             {#each sectors as option}
                                 <option value={option}>{option}</option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
                       
                     {#if formError}

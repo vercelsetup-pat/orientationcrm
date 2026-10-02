@@ -30,7 +30,7 @@ export async function POST({ request }) {
             contactName,
             contactPhone,
             contactEmail,
-            logoUrl
+            location
         } = body;
 
         if (!schoolName) {
@@ -44,7 +44,7 @@ export async function POST({ request }) {
                 contactName: contactName || null,
                 contactPhone: contactPhone || null,
                 contactEmail: contactEmail || null,
-                logoUrl: logoUrl || null,
+                location: location || null
             })
             .returning();
 

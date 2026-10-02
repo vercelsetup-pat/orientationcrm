@@ -4,7 +4,7 @@ export type School = {
 	contactName: string | null;
 	contactPhone: string | null;
 	contactEmail: string | null;
-	logoUrl: string | null;
+	location: string | null;
 	createdAt: string;
 };
 

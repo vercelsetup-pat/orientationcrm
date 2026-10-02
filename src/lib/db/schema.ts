@@ -10,14 +10,7 @@ import {
     pgEnum
 } from "drizzle-orm/pg-core";
 
-const bytea = customType<{
-    data: Buffer;
-    driverData: Buffer;
-}>({
-    dataType() {
-        return "bytea";
-    }
-});
+const bytea = customType<{ data: Buffer; driverData: Buffer; }>({ dataType() { return "bytea"; }});
 
 export const eventTypeEnum = pgEnum("event_type", [
     "open_doors",
@@ -33,7 +26,7 @@ export const schools = pgTable("schools", {
     contactName: varchar("contact_name", { length: 255}),
     contactPhone: varchar("contact_phone", { length: 50 }),
     contactEmail: varchar("contact_email", { length: 255}),
-    logoUrl: varchar("logo_url", { length: 500 }),
+    location: varchar("location", { length: 255 }),
     createdAt: timestamp("created_at", { withTimezone: true}).defaultNow().notNull()
 });
 
@@ -49,24 +42,14 @@ export const students = pgTable("students", {
 
 export const protocols = pgTable("protocols", {
     id: serial("id").primaryKey(),
-
     organization: varchar("organization", { length: 255 }).notNull(),
-
     representative: varchar("representative", { length: 255 }),
-
     date: date("date"),
-
     phonenumber: varchar("phonenumber", { length: 50 }),
-
     pdf: bytea("pdf"),
-
     createdAt: timestamp("createdat", { withTimezone: false }).defaultNow(),
-
     updatedAt: timestamp("updatedat", { withTimezone: false }).defaultNow(),
-
-    status: varchar("status", { length: 20 })
-        .notNull()
-        .default("Not Signed")
+    status: varchar("status", { length: 20 }).notNull().default("Not Signed")
 });
 
 export const events = pgTable("events", {

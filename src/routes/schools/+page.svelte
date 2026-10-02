@@ -9,7 +9,7 @@
     let contactName = $state("");
     let contactPhone = $state("");
     let contactEmail = $state("");
-    let logoUrl = $state("");
+    let location = $state("");
 
     let submitting = $state(false);
     let formError = $state("");
@@ -35,7 +35,7 @@
     let editContactName = $state("");
     let editContactPhone = $state("");
     let editContactEmail = $state("");
-    let editLogoUrl = $state("");
+    let editLocation = $state("");
     // #endregion
 
     let exportModalOpen = $state(false);
@@ -49,6 +49,8 @@
         { key: "contactPhone", label: "Phone" },
         { key: "contactEmail", label: "Email" }
     ] as const;
+
+    const locations = [ "Keserwan", "Jbeil", "Batroun", "Dbayeh-Maten", "Other"];
 
     const headers = ["", "School Name", "Contact Name", "Phone", "Email", "", ""];
 
@@ -74,7 +76,7 @@
         contactName = "";
         contactPhone = "";
         contactEmail = "";
-        logoUrl = "";
+        location = "";
         formError = "";
     }
 
@@ -89,7 +91,7 @@
         contactName = school.contactName ?? "";
         contactPhone = school.contactPhone ?? "";
         contactEmail = school.contactEmail ?? "";
-        logoUrl = school.logoUrl ?? "";
+        location = school.location ?? "";
         formError = "";
         openNonModal = true;
     }
@@ -114,7 +116,7 @@
                     contactName, 
                     contactPhone, 
                     contactEmail, 
-                    logoUrl 
+                    location
                 })
             });
 
@@ -144,7 +146,7 @@
                     contactName, 
                     contactPhone, 
                     contactEmail, 
-                    logoUrl 
+                    location
                 })
             });
             const data = await response.json();
@@ -191,7 +193,7 @@
         editContactName = selectedSchool.contactName ?? "";
         editContactPhone = selectedSchool.contactPhone ?? "";
         editContactEmail = selectedSchool.contactEmail ?? "";
-        editLogoUrl = selectedSchool.logoUrl ?? "";
+        editLocation = selectedSchool.location ?? "";
         isEditingDetail = true;
     }
 
@@ -210,7 +212,7 @@
                     contactName: editContactName,
                     contactPhone: editContactPhone,
                     contactEmail: editContactEmail,
-                    logoUrl: editLogoUrl
+                    location: editLocation
                 })
             });
             const data = await response.json();
@@ -224,17 +226,7 @@
         }
     }
 
-    function handleImageUpload(event: Event) {
-        const input = event.target as HTMLInputElement;
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                editLogoUrl = e.target?.result as string;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
+    
     // #endregion
 
     async function loadSchools() {
@@ -382,6 +374,7 @@
                     <thead>
                         <tr>
                             <th>School Name</th>
+                            <th>Location</th>
                             <th>Contact Name</th>
                             <th>Phone</th>
                             <th>Email</th>
@@ -400,8 +393,9 @@
                         {:else}
                             {#each displayedSchools as school}
                                 <tr>
-                        
+                    
                                     <td><span class="student-name">{school.schoolName}</span></td>
+                                    <td><span class="table-text">{school.location ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactName ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactPhone ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactEmail ?? "-"}</span></td>
@@ -470,9 +464,18 @@
                         <label for="contact-email" class="mb-2 block">Email</label>
                         <input id="contact-email" placeholder="Email" bind:value={contactEmail} />
                     </div>
-                    <div class="form-field">
-                        <label for="logo-url" class="mb-2 block">Logo URL <span class="text-gray-400">(optional)</span></label>
-                        <input id="logo-url" placeholder="https://..." bind:value={logoUrl} />
+                   <div class="form-field">
+                        <label for="school-location" class="mb-2 block">
+                            Location
+                        </label>
+
+                        <select id="school-location" bind:value={location}>
+                            <option value="">Select location</option>
+
+                            {#each locations as option}
+                                <option value={option}>{option}</option>
+                            {/each}
+                        </select>
                     </div>
                       
                     {#if formError}

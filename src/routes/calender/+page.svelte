@@ -1,179 +1,243 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import {
-		type CalendarEvent,
-		type EventType,
-		EVENT_TYPES,
-		EVENT_TYPE_LABELS,
-		EVENT_TYPE_COLORS
-	} from '$lib/types';
+    import type { PageData } from './$types';
+    import {
+        type CalendarEvent,
+        type EventType,
+        EVENT_TYPES,
+        EVENT_TYPE_LABELS,
+        EVENT_TYPE_COLORS
+    } from '$lib/types';
 
-	// Page-specific rules for which field the form shows per event type
-	const SCHOOL_REQUIRED: EventType[] = ['open_doors', 'school_visit'];
-	const SCHOOL_OPTIONAL: EventType[] = ['workshop'];
-	const NEEDS_OTHER_LABEL: EventType[] = ['event', 'other'];
+    const SCHOOL_REQUIRED: EventType[] = ['open_doors', 'school_visit'];
+    const SCHOOL_OPTIONAL: EventType[] = ['workshop'];
+    const NEEDS_OTHER_LABEL: EventType[] = ['event', 'other'];
 
-	let { data }: { data: PageData } = $props();
+    let { data }: { data: PageData } = $props();
 
-	let events = $state<CalendarEvent[]>(data.events);
-	const schools = data.schools;
+    // Events are changed locally when adding/deleting events,
+    // so they must remain writable state.
+    let events = $state<CalendarEvent[]>(data.events);
 
-	// Calendar navigation
-	let currentMonth = $state(new Date().getMonth());
-	let currentYear = $state(new Date().getFullYear());
+    // Schools are only read, so derived state is appropriate.
+    let schools = $derived(data.schools);
 
-	const monthName = $derived(
-		new Date(currentYear, currentMonth).toLocaleString('default', {
-			month: 'long',
-			year: 'numeric'
-		})
-	);
-	const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let currentMonth = $state(new Date().getMonth());
+    let currentYear = $state(new Date().getFullYear());
 
-	function daysInMonth(year: number, month: number) {
-		return new Date(year, month + 1, 0).getDate();
-	}
-	function firstWeekday(year: number, month: number) {
-		return new Date(year, month, 1).getDay();
-	}
+    const monthName = $derived(
+        new Date(currentYear, currentMonth).toLocaleString('default', {
+            month: 'long',
+            year: 'numeric'
+        })
+    );
 
-	const gridDays = $derived.by(() => {
-		const total = daysInMonth(currentYear, currentMonth);
-		const offset = firstWeekday(currentYear, currentMonth);
-		const days: (number | null)[] = [];
-		for (let i = 0; i < offset; i++) days.push(null);
-		for (let d = 1; d <= total; d++) days.push(d);
-		return days;
-	});
+    const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-	function dateKey(day: number) {
-		const m = String(currentMonth + 1).padStart(2, '0');
-		const d = String(day).padStart(2, '0');
-		return `${currentYear}-${m}-${d}`;
-	}
+    function daysInMonth(year: number, month: number) {
+        return new Date(year, month + 1, 0).getDate();
+    }
 
-	function eventsOn(day: number) {
-		const key = dateKey(day);
-		return events.filter((e) => e.eventDate === key);
-	}
+    function firstWeekday(year: number, month: number) {
+        return new Date(year, month, 1).getDay();
+    }
 
-	function isToday(day: number) {
-		const t = new Date();
-		return (
-			t.getFullYear() === currentYear && t.getMonth() === currentMonth && t.getDate() === day
-		);
-	}
+    const gridDays = $derived.by(() => {
+        const total = daysInMonth(currentYear, currentMonth);
+        const offset = firstWeekday(currentYear, currentMonth);
 
-	function prevMonth() {
-		if (currentMonth === 0) {
-			currentMonth = 11;
-			currentYear -= 1;
-		} else currentMonth -= 1;
-	}
-	function nextMonth() {
-		if (currentMonth === 11) {
-			currentMonth = 0;
-			currentYear += 1;
-		} else currentMonth += 1;
-	}
+        const days: (number | null)[] = [];
 
-	// --- Add-event modal ---
-	let showModal = $state(false);
-	let selectedDate = $state<string | null>(null);
-	let formTitle = $state('');
-	let formType = $state<EventType>('open_doors');
-	let formSchoolId = $state<number | ''>('');
-	let formOtherLabel = $state('');
-	let formNotes = $state('');
-	let saving = $state(false);
-	let formError = $state<string | null>(null);
+        for (let i = 0; i < offset; i++) {
+            days.push(null);
+        }
 
-	const schoolRequired = $derived(SCHOOL_REQUIRED.includes(formType));
-	const schoolOptional = $derived(SCHOOL_OPTIONAL.includes(formType));
-	const showSchoolField = $derived(schoolRequired || schoolOptional);
-	const showOtherField = $derived(NEEDS_OTHER_LABEL.includes(formType));
+        for (let d = 1; d <= total; d++) {
+            days.push(d);
+        }
 
-	function openModalForDay(day: number) {
-		selectedDate = dateKey(day);
-		formTitle = '';
-		formType = 'open_doors';
-		formSchoolId = '';
-		formOtherLabel = '';
-		formNotes = '';
-		formError = null;
-		showModal = true;
-	}
+        return days;
+    });
 
-	function closeModal() {
-		showModal = false;
-	}
+    function dateKey(day: number) {
+        const m = String(currentMonth + 1).padStart(2, '0');
+        const d = String(day).padStart(2, '0');
 
-	function formatDate(iso: string) {
-		return new Date(iso + 'T00:00:00').toLocaleDateString('default', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	}
+        return `${currentYear}-${m}-${d}`;
+    }
 
-	async function saveEvent() {
-		formError = null;
+    function eventsOn(day: number) {
+        const key = dateKey(day);
 
-		if (!formTitle.trim()) {
-			formError = 'Title is required.';
-			return;
-		}
-		if (schoolRequired && !formSchoolId) {
-			formError = 'Please select a school.';
-			return;
-		}
-		if (showOtherField && !formOtherLabel.trim()) {
-			formError = 'Please specify what the event is.';
-			return;
-		}
+        return events.filter((e) => e.eventDate === key);
+    }
 
-		saving = true;
-		try {
-			const res = await fetch('/api/events', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					title: formTitle.trim(),
-					type: formType,
-					eventDate: selectedDate,
-					schoolId: showSchoolField && formSchoolId ? Number(formSchoolId) : null,
-					otherLabel: showOtherField ? formOtherLabel.trim() : null,
-					notes: formNotes.trim() || null
-				})
-			});
+    function isToday(day: number) {
+        const t = new Date();
 
-			if (!res.ok) {
-				const body = await res.json().catch(() => null);
-				formError = body?.message ?? 'Could not save the event.';
-				return;
-			}
+        return (
+            t.getFullYear() === currentYear &&
+            t.getMonth() === currentMonth &&
+            t.getDate() === day
+        );
+    }
 
-			// Re-fetch so schoolName comes back resolved from the join
-			const refreshed = await fetch('/api/events');
-			events = await refreshed.json();
-			showModal = false;
-		} finally {
-			saving = false;
-		}
-	}
+    function prevMonth() {
+        if (currentMonth === 0) {
+            currentMonth = 11;
+            currentYear -= 1;
+        } else {
+            currentMonth -= 1;
+        }
+    }
 
-	async function removeEvent(id: number) {
-		const previous = events;
-		events = events.filter((e) => e.id !== id);
-		const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
-		if (!res.ok) events = previous; // roll back on failure
-	}
+    function nextMonth() {
+        if (currentMonth === 11) {
+            currentMonth = 0;
+            currentYear += 1;
+        } else {
+            currentMonth += 1;
+        }
+    }
 
-	function countByType(type: EventType) {
-		return events.filter((e) => e.type === type).length;
-	}
+    let showModal = $state(false);
+    let selectedDate = $state<string | null>(null);
+    let formTitle = $state('');
+    let formType = $state<EventType>('open_doors');
+    let formSchoolId = $state<number | ''>('');
+    let formOtherLabel = $state('');
+    let formNotes = $state('');
+    let saving = $state(false);
+    let formError = $state<string | null>(null);
 
-	const sortedEvents = $derived([...events].sort((a, b) => a.eventDate.localeCompare(b.eventDate)));
+    const schoolRequired = $derived(
+        SCHOOL_REQUIRED.includes(formType)
+    );
+
+    const schoolOptional = $derived(
+        SCHOOL_OPTIONAL.includes(formType)
+    );
+
+    const showSchoolField = $derived(
+        schoolRequired || schoolOptional
+    );
+
+    const showOtherField = $derived(
+        NEEDS_OTHER_LABEL.includes(formType)
+    );
+
+    function openModalForDay(day: number) {
+        selectedDate = dateKey(day);
+        formTitle = '';
+        formType = 'open_doors';
+        formSchoolId = '';
+        formOtherLabel = '';
+        formNotes = '';
+        formError = null;
+        showModal = true;
+    }
+
+    function closeModal() {
+        showModal = false;
+    }
+
+    function formatDate(iso: string) {
+        return new Date(iso + 'T00:00:00').toLocaleDateString('default', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    async function saveEvent() {
+        formError = null;
+
+        if (!formTitle.trim()) {
+            formError = 'Title is required.';
+            return;
+        }
+
+        if (schoolRequired && !formSchoolId) {
+            formError = 'Please select a school.';
+            return;
+        }
+
+        if (showOtherField && !formOtherLabel.trim()) {
+            formError = 'Please specify what the event is.';
+            return;
+        }
+
+        saving = true;
+
+        try {
+            const res = await fetch('/api/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: formTitle.trim(),
+                    type: formType,
+                    eventDate: selectedDate,
+                    schoolId:
+                        showSchoolField && formSchoolId
+                            ? Number(formSchoolId)
+                            : null,
+                    otherLabel:
+                        showOtherField
+                            ? formOtherLabel.trim()
+                            : null,
+                    notes: formNotes.trim() || null
+                })
+            });
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => null);
+
+                formError =
+                    body?.message ??
+                    'Could not save the event.';
+
+                return;
+            }
+
+            const refreshed = await fetch('/api/events');
+
+            if (!refreshed.ok) {
+                formError = 'Event saved, but the calendar could not be refreshed.';
+                return;
+            }
+
+            events = await refreshed.json();
+
+            showModal = false;
+        } finally {
+            saving = false;
+        }
+    }
+
+    async function removeEvent(id: number) {
+        const previous = events;
+
+        events = events.filter((e) => e.id !== id);
+
+        const res = await fetch(`/api/events/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!res.ok) {
+            events = previous;
+        }
+    }
+
+    function countByType(type: EventType) {
+        return events.filter((e) => e.type === type).length;
+    }
+
+    const sortedEvents = $derived(
+        [...events].sort((a, b) =>
+            a.eventDate.localeCompare(b.eventDate)
+        )
+    );
 </script>
 
 <div class="p-4 space-y-6">

@@ -550,27 +550,27 @@
                 <form class="drawer-form" onsubmit={handleSubmit}>
                     <div class="form-field">
                         <label for="protocol-organization">Organization</label>
-                        <input id="protocol-organization" type="text" placeholder="Enter organization name" bind:value={organization} required/>
+                        <Input id="protocol-organization" type="text" placeholder="Enter organization name" bind:value={organization} required/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-representative">Representative</label>
-                        <input id="protocol-representative" type="text" placeholder="Enter representative name" bind:value={representative}/>
+                        <Input id="protocol-representative" type="text" placeholder="Enter representative name" bind:value={representative}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-date">Date</label>
-                        <input id="protocol-date" type="date" bind:value={date}/>
+                        <Input id="protocol-date" type="date" bind:value={date}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-phone">Phone Number</label>
-                        <input id="protocol-phone" type="tel" placeholder="Enter phone number" bind:value={phoneNumber}/>
+                        <Input id="protocol-phone" type="tel" placeholder="Enter phone number" bind:value={phoneNumber}/>
                     </div>
 
                     <div class="form-field">
                         <label for="protocol-pdf">PDF</label>
-                        <input
+                        <Input
                             id="protocol-pdf"
                             type="file"
                             accept="application/pdf"

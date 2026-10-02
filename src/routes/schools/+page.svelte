@@ -360,7 +360,7 @@
 
         <div class="flex items-center justify-between mb-4">
              <div class="relative w-full max-w-[320px]">
-                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
                 {#if tableSearchQuery}
                     <button
                         type="button"
@@ -470,19 +470,19 @@
                 <form class="drawer-form" onsubmit={(event) => {  event.preventDefault();saveSchool();}}>
                     <div class="form-field">
                         <label for="school-name" class="mb-2 block">School Name</label>
-                        <input id="school-name" placeholder="School name" bind:value={schoolName} />
+                        <Input id="school-name" placeholder="School name" bind:value={schoolName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-name" class="mb-2 block">Contact name</label>
-                        <input id="contact-name" placeholder="Contact name" bind:value={contactName} />
+                        <Input id="contact-name" placeholder="Contact name" bind:value={contactName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-phone" class="mb-2 block">Phone number</label>
-                        <input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
+                        <Input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
                     </div>
                     <div class="form-field">
                         <label for="contact-email" class="mb-2 block">Email</label>
-                        <input id="contact-email" placeholder="Email" bind:value={contactEmail} />
+                        <Input id="contact-email" placeholder="Email" bind:value={contactEmail} />
                     </div>
                    <div class="form-field">
                         <label for="school-location" class="mb-2 block">
@@ -552,7 +552,7 @@
                                 <label class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors {selectedColumns.includes(col.key)
                                     ? 'border-blue-300 bg-blue-50'
                                     : 'border-gray-200 bg-white hover:bg-gray-50'}">
-                                    <input type="checkbox" style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;" checked={selectedColumns.includes(col.key)} onchange={() => toggleColumn(col.key)}/>
+                                    <Input type="checkbox" style="width:16px; height:16px; min-width:16px; padding:0; margin:0; flex:none; accent-color:#004a80;" checked={selectedColumns.includes(col.key)} onchange={() => toggleColumn(col.key)}/>
                                     <span>{col.label}</span>
                                 </label>
                             {/each}

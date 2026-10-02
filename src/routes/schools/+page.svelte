@@ -1,15 +1,15 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Avatar, Button } from 'flowbite-svelte';
+    import { Button, Badge } from 'flowbite-svelte';
     import { PlusOutline, DownloadOutline } from 'flowbite-svelte-icons';
     import type { School } from "$lib/types";
 
-    
     let schoolName = $state("");
     let contactName = $state("");
     let contactPhone = $state("");
     let contactEmail = $state("");
     let location = $state("");
+    let sector = $state("");
 
     let submitting = $state(false);
     let formError = $state("");
@@ -36,6 +36,7 @@
     let editContactPhone = $state("");
     let editContactEmail = $state("");
     let editLocation = $state("");
+    let editSector = $state("");
     // #endregion
 
     let exportModalOpen = $state(false);
@@ -51,12 +52,11 @@
     ] as const;
 
     const locations = [ "Keserwan", "Jbeil", "Batroun", "Dbayeh-Maten", "Other"];
-
+    const sectors = [ "private" , "public"];
     const headers = ["", "School Name", "Contact Name", "Phone", "Email", "", ""];
 
     let selectedColumns = $state<string[]>(exportColumns.map((c) => c.key));
 
-    
     let filteredSchoolsTable = $derived(
         schoolsData.filter((s) => s.schoolName.toLowerCase().includes(tableSearchQuery.toLowerCase()))
     );
@@ -77,6 +77,7 @@
         contactPhone = "";
         contactEmail = "";
         location = "";
+        sector = "";
         formError = "";
     }
 
@@ -92,6 +93,7 @@
         contactPhone = school.contactPhone ?? "";
         contactEmail = school.contactEmail ?? "";
         location = school.location ?? "";
+        sector = school.sector ?? "";
         formError = "";
         openNonModal = true;
     }
@@ -116,7 +118,8 @@
                     contactName, 
                     contactPhone, 
                     contactEmail, 
-                    location
+                    location,
+                    sector,
                 })
             });
 
@@ -146,7 +149,8 @@
                     contactName, 
                     contactPhone, 
                     contactEmail, 
-                    location
+                    location,
+                    sector
                 })
             });
             const data = await response.json();
@@ -194,6 +198,7 @@
         editContactPhone = selectedSchool.contactPhone ?? "";
         editContactEmail = selectedSchool.contactEmail ?? "";
         editLocation = selectedSchool.location ?? "";
+        editSector = selectedSchool.sector ?? "";
         isEditingDetail = true;
     }
 
@@ -212,7 +217,8 @@
                     contactName: editContactName,
                     contactPhone: editContactPhone,
                     contactEmail: editContactEmail,
-                    location: editLocation
+                    location: editLocation,
+                    sector: editSector
                 })
             });
             const data = await response.json();
@@ -375,6 +381,7 @@
                         <tr>
                             <th>School Name</th>
                             <th>Location</th>
+                            <th>Sector</th>
                             <th>Contact Name</th>
                             <th>Phone</th>
                             <th>Email</th>
@@ -395,7 +402,20 @@
                                 <tr>
                     
                                     <td><span class="student-name">{school.schoolName}</span></td>
-                                    <td><span class="table-text">{school.location ?? "-"}</span></td>
+                                    <td>
+                                        {#if school.location}
+                                            <Badge color="gray">{school.location}</Badge>
+                                        {:else}
+                                            -
+                                        {/if}
+                                    </td>
+                                    <td>
+                                        {#if school.sector === "private"}
+                                            <Badge>{school.sector ?? "-"}</Badge>
+                                        {:else if school.sector === "public"}
+                                            <Badge color="green">{school.sector ?? "-"}</Badge>
+                                        {/if}
+                                    </td>
                                     <td><span class="table-text">{school.contactName ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactPhone ?? "-"}</span></td>
                                     <td><span class="table-text">{school.contactEmail ?? "-"}</span></td>
@@ -473,6 +493,20 @@
                             <option value="">Select location</option>
 
                             {#each locations as option}
+                                <option value={option}>{option}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="school-sector" class="mb-2 block">
+                           Sector
+                        </label>
+
+                        <select id="school-sector" bind:value={sector}>
+                            <option value="">Select location</option>
+
+                            {#each sectors as option}
                                 <option value={option}>{option}</option>
                             {/each}
                         </select>

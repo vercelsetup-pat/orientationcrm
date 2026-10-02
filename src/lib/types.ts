@@ -5,6 +5,7 @@ export type School = {
 	contactPhone: string | null;
 	contactEmail: string | null;
 	location: string | null;
+	sector: string | null,
 	createdAt: string;
 };
 
@@ -30,17 +31,15 @@ export interface Protocol {
     status: string;
 }
 
-
 export type EventType = 'open_doors' | 'workshop' | 'school_visit' | 'event' | 'other';
  
-
 export interface CalendarEvent {
 	id: number;
 	title: string;
 	type: EventType;
-	eventDate: string; // ISO date, e.g. "2026-09-25"
+	eventDate: string; 
 	schoolId: number | null;
-	schoolName: string | null; // resolved server-side via join
+	schoolName: string | null; 
 	otherLabel: string | null;
 	notes: string | null;
 }

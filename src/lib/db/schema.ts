@@ -27,6 +27,7 @@ export const schools = pgTable("schools", {
     contactPhone: varchar("contact_phone", { length: 50 }),
     contactEmail: varchar("contact_email", { length: 255}),
     location: varchar("location", { length: 255 }),
+    sector: varchar("sector", { length: 255 }),
     createdAt: timestamp("created_at", { withTimezone: true}).defaultNow().notNull()
 });
 

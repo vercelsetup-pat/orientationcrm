@@ -41,7 +41,8 @@ export async function PATCH({ params, request }) {
             contactName,
             contactPhone,
             contactEmail,
-            location
+            location,
+            sector
         } = body;
 
         const result = await db
@@ -51,7 +52,8 @@ export async function PATCH({ params, request }) {
                 ...(contactName !== undefined && { contactName }),
                 ...(contactPhone !== undefined && { contactPhone }),
                 ...(contactEmail !== undefined && { contactEmail }),
-                ...(location !== undefined && { location })
+                ...(location !== undefined && { location }),
+                ...(sector !== undefined && { sector })
             })
             .where(eq(schools.id, id))
             .returning();

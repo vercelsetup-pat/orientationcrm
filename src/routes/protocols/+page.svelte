@@ -3,7 +3,7 @@
     import type { Protocol } from "$lib/types";
     import { Button, Badge, Select, Input, Checkbox  } from "flowbite-svelte";
     import { PlusOutline, FilePdfOutline, DownloadOutline  } from "flowbite-svelte-icons";
-	import { SelectAllRounded } from "@mui/icons-material";
+
  
     let protocolsData = $state<Protocol[]>([]);
     let tableSearchQuery = $state("");

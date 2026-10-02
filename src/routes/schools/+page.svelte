@@ -360,7 +360,7 @@
 
         <div class="flex items-center justify-between mb-4">
              <div class="relative w-full max-w-[320px]">
-                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
+                <input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
                 {#if tableSearchQuery}
                     <button
                         type="button"
@@ -470,19 +470,19 @@
                 <form class="drawer-form" onsubmit={(event) => {  event.preventDefault();saveSchool();}}>
                     <div class="form-field">
                         <label for="school-name" class="mb-2 block">School Name</label>
-                        <Input id="school-name" placeholder="School name" bind:value={schoolName} />
+                        <input id="school-name" placeholder="School name" bind:value={schoolName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-name" class="mb-2 block">Contact name</label>
-                        <Input id="contact-name" placeholder="Contact name" bind:value={contactName} />
+                        <input id="contact-name" placeholder="Contact name" bind:value={contactName} />
                     </div>
                     <div class="form-field">
                         <label for="contact-phone" class="mb-2 block">Phone number</label>
-                        <Input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
+                        <input id="contact-phone" placeholder="Phone number" bind:value={contactPhone} />
                     </div>
                     <div class="form-field">
                         <label for="contact-email" class="mb-2 block">Email</label>
-                        <Input id="contact-email" placeholder="Email" bind:value={contactEmail} />
+                        <input id="contact-email" placeholder="Email" bind:value={contactEmail} />
                     </div>
                    <div class="form-field">
                         <label for="school-location" class="mb-2 block">

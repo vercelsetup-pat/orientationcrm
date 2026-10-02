@@ -442,10 +442,10 @@
              <div class="flex items-center justify-between py-4 border-t border-gray-100"> 
                 <div class="flex items-center  text-sm text-gray-500"> 
                      <Select bind:value={rowsPerPage}  > 
-                        <option value={9}>9</option> 
-                        <option value={15}>15</option> 
-                        <option value={25}>25</option> 
-                        <option value={35}>35</option> 
+                        <option value={9}>9 rows per page</option> 
+                        <option value={15}>15 rows per page</option> 
+                        <option value={25}>25 rows per page</option> 
+                        <option value={35}>35 rows per page</option> 
                      </Select> 
                 </div> 
             </div>

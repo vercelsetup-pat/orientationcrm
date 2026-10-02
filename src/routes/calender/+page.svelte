@@ -16,6 +16,7 @@
 
     // Events are changed locally when adding/deleting events,
     // so they must remain writable state.
+    // svelte-ignore state_referenced_locally
     let events = $state<CalendarEvent[]>(data.events);
 
     // Schools are only read, so derived state is appropriate.

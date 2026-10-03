@@ -16,6 +16,8 @@
     let openNonModal = $state(false);
     let editingSchoolId = $state<number | null>(null);
     let tableSearchQuery = $state("");
+    let selectedSector = $state("Filter by Sector");
+    let selectedLocation = $state("Filter by Location");
 
     let rowsPerPage = $state(9);
 
@@ -58,7 +60,21 @@
     let selectedColumns = $state<string[]>(exportColumns.map((c) => c.key));
 
     let filteredSchoolsTable = $derived(
-        schoolsData.filter((s) => s.schoolName.toLowerCase().includes(tableSearchQuery.toLowerCase()))
+        schoolsData.filter((s) => {
+            const matchesSearch = s.schoolName
+                .toLowerCase()
+                .includes(tableSearchQuery.toLowerCase());
+
+            const matchesSector =
+                selectedSector === "Filter by Sector" ||
+                s.sector === selectedSector;
+
+            const matchesLocation =
+                selectedLocation === "Filter by Location" ||
+                s.location === selectedLocation;
+
+            return matchesSearch && matchesSector && matchesLocation;
+        })
     );
 
     let displayedSchools = $derived(
@@ -358,19 +374,37 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-4">
-             <div class="relative w-full max-w-[320px]">
-                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery}/>
-                {#if tableSearchQuery}
-                    <button
-                        type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick={() => (tableSearchQuery = "")}
-                        aria-label="Clear search"
-                    >
-                        ×
-                    </button>
-                {/if}
+        <div class="flex items-center justify-between mb-4 gap-3">
+            <div class="relative w-full max-w-[320px]">
+                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery} />
+                    {#if tableSearchQuery}
+                        <button
+                            type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick={() => (tableSearchQuery = "")}
+                            aria-label="Clear search"
+                        >
+                            ×
+                        </button>
+                    {/if}
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <Select class="w-[150px]" bind:value={selectedSector}>
+                    <option value="Filter by Sector">Filter by Sector</option>
+                    {#each sectors as option}
+                        <option value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </option>
+                    {/each}
+                </Select>
+
+                <Select class="w-[170px]" bind:value={selectedLocation}>
+                    <option value="Filter by Location">Filter by Location</option>
+                    {#each locations as option}
+                        <option value={option}>{option}</option>
+                    {/each}
+                </Select>
             </div>
         </div>
 

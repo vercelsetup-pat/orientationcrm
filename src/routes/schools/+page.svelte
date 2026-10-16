@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Button, Badge, Select, Input } from 'flowbite-svelte';
-    import { PlusOutline, DownloadOutline } from 'flowbite-svelte-icons';
+    import { Button, Badge, Select, Input, Pagination } from 'flowbite-svelte';
+    import { PlusOutline, DownloadOutline, ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
     import type { School } from "$lib/types";
 
     let schoolName = $state("");
@@ -19,8 +19,8 @@
     let selectedSector = $state("Filter by Sector");
     let selectedLocation = $state("Filter by Location");
 
-    let rowsPerPage = $state(9);
-
+    let rowsPerPage = $state(10);
+    let currentPage = $state(1);
     // #region List / table state
  
     let schoolsData = $state<School[]>([]);
@@ -77,9 +77,36 @@
         })
     );
 
-    let displayedSchools = $derived(
-        filteredSchoolsTable.slice(0, rowsPerPage)
+    let totalPages = $derived(
+        Math.ceil(filteredSchoolsTable.length / rowsPerPage)
     );
+
+    let displayedSchools = $derived(
+        filteredSchoolsTable.slice(
+            (currentPage - 1) * rowsPerPage,
+            currentPage * rowsPerPage
+        )
+    );
+
+    let paginationPages = $derived(
+        Array.from({ length: totalPages }, (_, i) => ({
+            name: String(i + 1),
+            href: "#",
+            active: currentPage === i + 1
+        }))
+    );
+
+    function previousPage() {
+        if (currentPage > 1) {
+            currentPage -= 1;
+        }
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage += 1;
+        }
+    }
 
     function closePanel() {
         openNonModal = false;
@@ -337,6 +364,15 @@
         }
     }
 
+    $effect(() => {
+        tableSearchQuery;
+        selectedSector;
+        selectedLocation;
+        rowsPerPage;
+
+        currentPage = 1;
+    });
+
     onMount(() => {
         loadSchools();
     });
@@ -344,9 +380,6 @@
 
 <div class="page" class:panel-open={openNonModal}>
     <section class="w-full min-0">
-        <div class="flex items-end justify-between gap-5 mb-5">
-            <!--option to add moe content-->
-        </div>
         <div class="card-primary">
             <div class="card-pattern"></div>
             <div class="relative z-[2] min-h-[100px] box-border px-[22px] py-5 flex items-center justify-between gap-5">
@@ -374,9 +407,9 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-4 gap-3">
+        <div class="flex items-center justify-between mb-3 gap-3">
             <div class="relative w-full max-w-[320px]">
-                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery} />
+                <Input type="text" placeholder="Search schools..." bind:value={tableSearchQuery} oninput={() => (currentPage = 1)}/>
                     {#if tableSearchQuery}
                         <button
                             type="button"
@@ -390,7 +423,7 @@
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
-                <Select class="w-[150px]" bind:value={selectedSector}>
+                <Select class="w-[150px]" bind:value={selectedSector} onchange={() => (currentPage = 1)}>
                     <option value="Filter by Sector">Filter by Sector</option>
                     {#each sectors as option}
                         <option value={option}>
@@ -399,7 +432,7 @@
                     {/each}
                 </Select>
 
-                <Select class="w-[170px]" bind:value={selectedLocation}>
+                <Select class="w-[170px]" bind:value={selectedLocation} onchange={() => (currentPage = 1)}>
                     <option value="Filter by Location">Filter by Location</option>
                     {#each locations as option}
                         <option value={option}>{option}</option>
@@ -469,23 +502,43 @@
                     </tbody>
                 </table>
             </div>
-            <div class="table-footer"> Showing {displayedSchools.length} of {filteredSchoolsTable.length} schools </div>
+            <!-- <div class="table-footer"> 
+                Showing {displayedSchools.length} of {filteredSchoolsTable.length} schools 
+            </div> -->
         </div>
 
-          <div class="flex items-center justify-between mb-4">
-             <div class="flex items-center justify-between py-4 border-t border-gray-100"> 
-                <div class="flex items-center  text-sm text-gray-500"> 
-                     <Select bind:value={rowsPerPage}  > 
-                        <option value={9}>9 per page</option> 
-                        <option value={15}>15 per page</option> 
-                        <option value={25}>25 per page</option> 
-                        <option value={35}>35 per page</option> 
-                     </Select> 
-                </div> 
+        <div class="flex w-full items-center justify-between gap-4 border-t border-gray-100 py-3">
+            <div class="flex shrink-0 items-center">
+                <Select class="!w-[140px]"bind:value={rowsPerPage}>
+                    <option value={10}>10 per page</option>
+                    <option value={15}>15 per page</option>
+                    <option value={25}>25 per page</option>
+                    <option value={35}>35 per page</option>
+                </Select>
             </div>
+            
+            {#if totalPages > 1}
+                <div class="ml-auto flex shrink-0 items-center justify-end gap-1">
+                    <Button color="light" size="xs" disabled={currentPage === 1} onclick={previousPage}>
+                        <ChevronLeftOutline class="h-4 w-4" />
+                    </Button>
+
+                    {#each paginationPages as p, i}
+                        <button type="button" class="h-8 min-w-8 rounded-lg border px-2 text-xs font-medium transition-colors
+                            {currentPage === i + 1 ? 'border-[#004a80] bg-[#004a80] text-white' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+                            aria-current={currentPage === i + 1 ? 'page' : undefined}
+                            onclick={() => (currentPage = i + 1)}>
+                            {p.name}
+                        </button>
+                    {/each}
+
+                    <Button color="light" size="xs" disabled={currentPage === totalPages} onclick={nextPage}>
+                        <ChevronRightOutline class="h-4 w-4" />
+                    </Button>
+                </div>
+            {/if}
         </div>
     </section>
-
 
     {#if openNonModal}
         <aside class="drawer-panel">

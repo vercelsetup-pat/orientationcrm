@@ -307,10 +307,6 @@
 
 <div class="page" class:panel-open={openNonModal}>
     <section class="w-full min-w-0">
-        <div class="flex items-end justify-between gap-5 mb-5">
-            <!--option to add moe content-->
-        </div>
-
         <div class="card-primary">
             <div class="card-pattern"></div>
             <div class="relative z-[2] min-h-[100px] box-border px-[22px] py-5 flex items-center justify-between gap-5">

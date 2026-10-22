@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import type { Students, School } from "$lib/types";
     import { Button, Input, Select } from "flowbite-svelte";
-	import { PlusOutline } from "flowbite-svelte-icons";
+	import { PlusOutline, ChevronLeftOutline, ChevronRightOutline } from "flowbite-svelte-icons";
     import { Badge } from "flowbite-svelte";
 
     let studentsData = $state<Students[]>([]);
@@ -20,6 +20,12 @@
     let academicYear = $state("");
     let status = $state("");
 
+    let tableSearchQuery = $state("");
+    let selectedSchool = $state("");   
+    let selectedStatus = $state("");   
+    let rowsPerPage = $state(10);
+    let currentPage = $state(1);
+
     const statusOptions = [
         "SE",
         "SV",
@@ -28,6 +34,55 @@
         "Terminal",
         "Bacc Français"
     ];
+
+    let filteredStudents = $derived(
+        studentsData.filter((s) => {
+            const q = tableSearchQuery.trim().toLocaleLowerCase();
+
+            const matchesSearch = !q || s.name.toLowerCase().includes(q);
+
+            const matchesSchool = !selectedSchool || String(s.schoolId) === selectedSchool;
+
+            const matchesStatus = !selectedStatus || s.status === selectedStatus;
+
+            return matchesSearch && matchesSchool && matchesStatus;
+        })
+    );
+
+    let totalPages = $derived(
+        Math.max(1, Math.ceil(filteredStudents.length / rowsPerPage))
+    );
+
+    let displayedStudents = $derived(
+        filteredStudents.slice(
+            (currentPage - 1) * rowsPerPage,
+            currentPage * rowsPerPage
+        )
+    );
+
+    let paginationPages = $derived(
+        Array.from({ length: totalPages }, (_, i) => i + 1)
+    );
+
+    function previousPage() {
+        if (currentPage > 1) currentPage -= 1;
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages) currentPage += 1;
+    }
+
+    $effect(() => {
+        tableSearchQuery;
+        selectedSchool;
+        selectedStatus;
+        rowsPerPage;
+        currentPage = 1;
+    });
+
+    $effect(() => {
+        if (currentPage > totalPages) currentPage = totalPages;
+    });
 
     async function loadStudents() {
         loading = true;
@@ -56,20 +111,21 @@
             const response = await fetch("/api/schools");
 
             if (!response.ok) {
-                throw new Error("Failed to load schools");
+                throw new Error(`Schools request failed (${response.status})`);
             }
 
-            schoolsData = await response.json();
+            const data = await response.json();
+            console.log("schools response:", data);
+
+            schoolsData = Array.isArray(data) ? data : (data.schools ?? data.data ?? []);
         } catch (err) {
             console.error("Failed to load schools:", err);
+            error = err instanceof Error ? err.message : "Failed to load schools";
         }
     }
 
-    function getSchoolName(schoolId: number) {
-        const school = schoolsData.find(
-            (school) => school.id === schoolId
-        );
-
+    function getSchoolName(id: number | string) {
+        const school = schoolsData.find((s) => String(s.id) === String(id));
         return school?.schoolName ?? "-";
     }
 
@@ -298,9 +354,8 @@
         }
     }
 
-    onMount(() => {
-        loadStudents();
-        loadSchools();
+    onMount(async () => {
+        await Promise.all([loadStudents(), loadSchools()]);
     });
 </script>
 
@@ -329,6 +384,37 @@
                 </div>
             </div>
         </div>
+        <div class="flex items-center justify-between mb-3 gap-3">
+            <div class="relative w-full max-w-[320px]">
+                <Input type="text" placeholder="Search students..." bind:value={tableSearchQuery} />
+                {#if tableSearchQuery}
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick={() => (tableSearchQuery = "")}
+                        aria-label="Clear search"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <Select class="w-[170px]" bind:value={selectedSchool}>
+                    <option value="">Filter by School</option>
+                    {#each schoolsData as school}
+                        <option value={String(school.id)}>{school.schoolName}</option>
+                    {/each}
+                </Select>
+
+                <Select class="w-[150px]" bind:value={selectedStatus}>
+                    <option value="">Filter by Status</option>
+                    {#each statusOptions as option}
+                        <option value={option}>{option}</option>
+                    {/each}
+                </Select>
+            </div>
+        </div>
 
         <div class="card-secondary">
             <div class="table-wrapper">
@@ -355,12 +441,12 @@
                             <tr>
                                 <td colspan="6" class="empty-cell text-red-500">{error}</td>
                             </tr>
-                        {:else if studentsData.length === 0}
+                        {:else if filteredStudents.length === 0}
                             <tr>
                                 <td colspan="6" class="empty-cell">No students found.</td>
                             </tr>
                         {:else}
-                            {#each studentsData as student}
+                           {#each displayedStudents as student (student.id)}
                                 <tr>
                                     <td><span class="student-name">{student.name} </span></td>
                                     <td><span class="table-text">{student.phone ?? "-"}</span></td>
@@ -385,8 +471,44 @@
                     </tbody>
                 </table>
             </div>
-            <div class="table-footer">Showing {studentsData.length}students</div>
         </div>
+
+        <div class="flex w-full items-center justify-between gap-4 border-t border-gray-100 py-3">
+            <div class="flex shrink-0 items-center">
+                <Select class="!w-[140px]" bind:value={rowsPerPage}>
+                    <option value={10}>10 per page</option>
+                    <option value={15}>15 per page</option>
+                    <option value={25}>25 per page</option>
+                    <option value={35}>35 per page</option>
+                </Select>
+            </div>
+
+            {#if totalPages > 1}
+                <div class="ml-auto flex shrink-0 items-center justify-end gap-1">
+                    <Button color="light" size="xs" disabled={currentPage === 1} onclick={previousPage}>
+                        <ChevronLeftOutline class="h-4 w-4" />
+                    </Button>
+
+                    {#each paginationPages as page}
+                        <button
+                            type="button"
+                            class="h-8 min-w-8 rounded-lg border px-2 text-xs font-medium transition-colors
+                                {currentPage === page
+                                    ? 'border-[#004a80] bg-[#004a80] text-white'
+                                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+                            aria-current={currentPage === page ? "page" : undefined}
+                            onclick={() => (currentPage = page)}
+                        >
+                            {page}
+                        </button>
+                    {/each}
+
+                    <Button color="light" size="xs" disabled={currentPage === totalPages} onclick={nextPage}>
+                        <ChevronRightOutline class="h-4 w-4" />
+                    </Button>
+                </div>
+            {/if}
+    </div>
     </section>
 
     {#if openNonModal}

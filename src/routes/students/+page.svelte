@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Students, School } from "$lib/types";
-    import { Button } from "flowbite-svelte";
+    import { Button, Input, Select } from "flowbite-svelte";
 	import { PlusOutline } from "flowbite-svelte-icons";
     import { Badge } from "flowbite-svelte";
 
@@ -304,7 +304,6 @@
     });
 </script>
 
-
 <div class="page" class:panel-open={openNonModal}>
     <section class="w-full min-w-0">
         <div class="card-primary">
@@ -401,44 +400,41 @@
                                 : "Update the student's information."}
                         </p>
                     </div>
-
                     <button type="button" class="close-button" aria-label="Close panel" onclick={closePanel}>×</button>
                 </div>
 
                 <form class="drawer-form" onsubmit={handleSubmit}>
                     <div class="form-field">
                         <label for="student-name"> Student Name</label>
-                        <input id="student-name" type="text"placeholder="Enter student name" bind:value={name} required/>
+                        <Input id="student-name" type="text"placeholder="Enter student name" bind:value={name} required/>
                     </div>
 
                     <div class="form-field">
                         <label for="student-phone"> Phone Number </label>
-                        <input id="student-phone" type="tel" placeholder="Enter phone number" bind:value={phone} required />
+                        <Input id="student-phone" type="tel" placeholder="Enter phone number" bind:value={phone} required />
                     </div>
 
                     <div class="form-field">
-                        <label for="student-school">  School</label>
-                        <select id="student-school" bind:value={schoolId} required>
-                            <option value=""  disabled>Choose option ...</option>
+                        <label for="student-school"> School</label>
+                        <Select id="student-school" bind:value={schoolId} required>
                             {#each schoolsData as school}
                                 <option value={String(school.id)}> {school.schoolName} </option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
 
                     <div class="form-field">
-                        <label for="academic-year"> Academic Year</label>
-                        <input id="academic-year" type="text"  placeholder="e.g. 2026-2027" bind:value={academicYear} required/>
+                        <label for="academic-year">Academic Year</label>
+                        <Input id="academic-year" type="text"  placeholder="e.g. 2026-2027" bind:value={academicYear} required/>
                     </div>
 
                     <div class="form-field">
-                        <label for="student-status"> Status</label>
-                        <select  id="student-status" bind:value={status} required>
-                            <option value="" disabled>Choose option ...</option>
+                        <label for="student-status">Status</label>
+                        <Select  id="student-status" bind:value={status} required>
                             {#each statusOptions as option}
                                 <option value={option}>{option}</option>
                             {/each}
-                        </select>
+                        </Select>
                     </div>
 
                     {#if formError}
@@ -451,7 +447,6 @@
                         </Button>
                         <Button type="button" color="alternative" onclick={closePanel} > Cancel</Button>
                     </div>
-
                 </form>
             </div>
         </aside>
